@@ -1,0 +1,129 @@
+entrypoints Model;
+
+Model.          Model ::= [EnvVar] [ReactiveClass] Main;
+
+
+
+-- environment variables
+EnvVar. EnvVar ::= "env" TypedParameter ";";
+separator EnvVar "";
+
+-- reactiveclass
+ReactiveClass.  ReactiveClass ::= "reactiveclass" Ident "(" Integer ")" "{" KnownRebecs StateVars MsgSrvInit [MsgSrv] "}";
+separator       ReactiveClass "";
+
+
+-- known rebecs, statevar, msgsrv
+NoKnownRebecs.  KnownRebecs ::= ;
+KnownRebecs.    KnownRebecs ::= "knownrebecs" "{" [TypedVarDecl] "}";
+
+NoStateVars.    StateVars ::= ;
+StateVars.      StateVars ::= "statevars" "{" [TypedVarDecl] "}";
+
+MsgSrvInit.     MsgSrvInit ::= "msgsrv" "initial" "(" [TypedParameter] ")" "{" [Stm] "}";
+
+MsgSrv.         MsgSrv ::= "msgsrv" Ident "(" [TypedParameter] ")" "{" [Stm] "}";
+terminator      MsgSrv "";
+
+-- var decl
+VDeclAssign.               VarDecl ::= Ident "=" Exp;
+VDecl.                     VarDecl ::= Ident;
+separator nonempty VarDecl ",";
+
+TypedVarDecl.      TypedVarDecl ::= TypeName Ident;
+TypedVarDeclAss.   TypedVarDecl ::= TypeName Ident "=" Exp;
+separator TypedVarDecl ";";
+
+TypedParameter.        TypedParameter ::= TypeName Ident;
+separator TypedParameter ",";
+
+
+-- built in types
+Tint.       BasicType ::= "int";
+Ttime.      BasicType ::= "time";
+Tboolean.   BasicType ::= "boolean";
+
+BuiltIn.    TypeName ::= BasicType;
+ClassType.  TypeName ::= Ident;
+
+-- statement
+_.      Stm ::= Stm ";";
+Ass.    Stm ::= Ident AssignmentOp Exp ";";
+Local.  Stm ::= TypedVarDecl ";";
+Call.   Stm ::= Ident "." Ident "(" [Exp] ")" After Deadline ";";
+Delay.  Stm ::= "delay" "(" Exp ")" ";";
+Sel.    Stm ::= "if" "(" Exp ")" CompStm [ElseifStm] ElseStm;
+separator Stm "";
+
+SingleCompoundStm.  CompStm ::= Stm;
+MultCompoundStm.    CompStm ::= "{" [Stm] "}";
+
+NoAfter.      After ::= ;
+WithAfter.    After ::= "after" "(" Exp ")";
+
+NoDeadline.     Deadline ::= ;
+WithDeadline.   Deadline ::= "deadline" "(" Exp ")";
+
+ElseifStm.      ElseifStm ::= "else if" "(" Exp ")" CompStm;
+terminator ElseifStm "";
+
+EmptyElseStm.        ElseStm ::= ;
+ElseStm.             ElseStm ::= "else" CompStm;
+
+-- expression
+separator nonempty Ident ".";
+
+Elor.         Exp   ::= Exp "||" Exp2;
+Eland.        Exp2  ::= Exp2 "&&" Exp3;
+Ebitor.       Exp3  ::= Exp3 "|" Exp4;
+Ebitexor.     Exp4  ::= Exp4 "^" Exp5;
+Ebitand.      Exp5  ::= Exp5 "&" Exp6;
+Eeq.          Exp6  ::= Exp6 "==" Exp7;
+Eneq.         Exp6  ::= Exp6 "!=" Exp7;
+Elthen.       Exp7  ::= Exp7 "<" Exp8;
+Egrthen.      Exp7  ::= Exp7 ">" Exp8;
+Ele.          Exp7  ::= Exp7 "<=" Exp8;
+Ege.          Exp7  ::= Exp7 ">=" Exp8;
+Eleft.        Exp8 ::= Exp8 "<<" Exp9;
+Eright.       Exp8 ::= Exp8 ">>" Exp9;
+Eplus.        Exp9 ::= Exp9 "+" Exp10;
+Eminus.       Exp9 ::= Exp9 "-" Exp10;
+Etimes.       Exp10 ::= Exp10 "*" Exp11;
+Ediv.         Exp10 ::= Exp10 "/" Exp11;
+Emod.         Exp10 ::= Exp10 "%" Exp11;
+Eexpcoercion. Exp11 ::= "(" Exp ")";
+ENondet.      Exp11 ::= "?" "(" [Exp] ")";
+Epreop.       Exp12 ::= UnaryOperator Exp11;
+Enow.         Exp13 ::= "now" "(" ")";
+Econst.       Exp13 ::= Constant;
+Evar.         Exp14 ::= [Ident];
+
+separator Exp ",";
+coercions Exp 14;
+
+Eint.     Constant ::= Integer;  
+Etrue.    Constant ::= "true";
+Efalse.   Constant ::= "false";
+separator Constant ",";
+
+Plus.              UnaryOperator ::= "+";
+Negative.          UnaryOperator ::= "-";
+Complement.        UnaryOperator ::= "~";
+Logicalneg.        UnaryOperator ::= "!";
+
+Assign.            AssignmentOp ::= "=";
+AssignMul.         AssignmentOp ::= "*=";
+AssignDiv.         AssignmentOp ::= "/=";
+AssignMod.         AssignmentOp ::= "%=";
+AssignAdd.         AssignmentOp ::= "+=";
+AssignSub.         AssignmentOp ::= "-=";
+
+
+-- main
+Main.   Main ::= "main" "{" [InstanceDecl] "}";
+
+InstanceDecl.    InstanceDecl ::= TypedVarDecl "(" [VarDecl] ")" ":" "(" [Exp] ")";
+separator InstanceDecl ";";
+
+comment "/*" "*/";
+comment "//";

@@ -1,0 +1,57 @@
+env time sendDelay;
+env time recvDelay;
+
+reactiveclass SenderObj(3) {
+    knownrebecs {
+        ReceiverObj receiverObj;
+    }
+
+    statevars {
+        boolean receivedAck;
+    }
+
+    msgsrv initial() {
+        self.start();
+    }
+
+    msgsrv start() {
+        time t = ?(-1,sendDelay-1,sendDelay,sendDelay+1); // -1=fail -- 2,3,4=delays
+        if (t != -1) {
+            receiverObj.send() after(t);
+        }
+        delay(8);
+        self.checkAck();
+    }
+
+    msgsrv ack() {
+        receivedAck = true;
+    }
+
+    msgsrv checkAck() {
+        if (!receivedAck) {
+            self.start();
+        }
+    }
+}
+
+reactiveclass ReceiverObj(3) {
+    knownrebecs {
+        SenderObj senderObj;
+    }
+
+    statevars {}
+
+    msgsrv initial() {}
+
+    msgsrv send() {
+        time t = ?(-1,recvDelay-1,recvDelay,recvDelay+1); // -1=fail -- 1,2,3=delays
+        if (t != -1) {
+            senderObj.ack() after(t);
+        }
+    }
+}
+
+main {
+    ReceiverObj receiverObj(senderObj):();
+    SenderObj senderObj(receiverObj):();
+}

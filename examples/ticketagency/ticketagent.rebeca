@@ -1,0 +1,73 @@
+env int requestDeadline; // 5
+env int checkIssuedPeriod; // 10
+env int retryRequestPeriod; // 2
+env int newRequestPeriod; // 20
+env int serviceTime1; // 2
+env int serviceTime2; // 21
+
+reactiveclass Agent(3) {
+  knownrebecs {
+    TicketService ts1;
+    TicketService ts2;
+  }
+
+  statevars {
+    int attemptCount;
+    boolean ticketIssued;
+    int token; 
+  }
+
+  msgsrv initial() { self.findTicket(ts1); }
+
+  msgsrv findTicket(TicketService ts) {
+    attemptCount = attemptCount + 1;
+    token = token + 1;
+    ts.requestTicket(token) deadline(now() + requestDeadline);
+    self.checkTicket() after(checkIssuedPeriod);
+  }
+
+  msgsrv ticketIssued(int tok) {
+    if (token == tok) {
+      ticketIssued = true;
+    }
+  }
+
+  msgsrv checkTicket() {
+    if (!ticketIssued && attemptCount == 1) {
+      self.findTicket(ts2);
+    } else if (!ticketIssued && attemptCount == 2) {
+      self.retry() after(retryRequestPeriod);
+    } else {
+      self.retry() after(newRequestPeriod);
+    }
+  }
+
+  msgsrv retry() {
+    attemptCount = 0;
+    self.findTicket(ts1);
+  }
+}
+
+reactiveclass TicketService(3) {
+  knownrebecs {
+    Agent agent;
+  }
+
+  statevars {
+  }
+
+  msgsrv initial() { }
+
+  msgsrv requestTicket(int token) {
+    int wait = ?(serviceTime1,serviceTime2);
+    delay(wait);
+    agent.ticketIssued(token);
+  } 
+}
+
+main {
+  Agent agent(ts1, ts2):();
+  TicketService ts1(agent):();
+  TicketService ts2(agent):();
+}
+
