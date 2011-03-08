@@ -1,2 +1,2 @@
-+ Create data types for Erlang as a target language
-+ Alternatively, use Core.Erlang package
++ Create data types for Erlang as a target language (generated output is typeless) or alternatively, use Core.Erlang package
++ Implement translation which uses local time (this is partially done, in module Generator.Discrete which should be renamed to e.g. LocalTime)
