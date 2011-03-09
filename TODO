@@ -3,3 +3,4 @@
 + Add usage example after generation for executing McErlang to README
 + Add some type checking
 + Finish some program transformations before translation to Erlang (e.g. var opassign exp, x += 1 does not work)
++ Write a translation for properties (some kind of predicates, ltl/ctl won't work for now)
