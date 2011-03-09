@@ -1,3 +1,5 @@
 + Create data types for Erlang as a target language (generated output is typeless) or alternatively, use Core.Erlang package
 + Implement translation which uses local time (this is partially done, in module Generator.Discrete which should be renamed to e.g. LocalTime)
 + Add usage example after generation for executing McErlang to README
++ Add some type checking
++ Finish some program transformations before translation to Erlang (e.g. var opassign exp, x += 1 does not work)
