@@ -14,6 +14,7 @@ data ModelAlgebra id tvd tp env kr sv rc msi ms stm mai mod = ModelAlgebra {
   , main :: R.Main -> mai
 }
 
+
 data StmAlgebra id exp tvd aft dea cs eli el stm = StmAlgebra {
     ass :: id -> exp -> stm
   , local :: tvd -> stm
@@ -21,6 +22,7 @@ data StmAlgebra id exp tvd aft dea cs eli el stm = StmAlgebra {
   , delay :: exp -> stm
   , sel :: exp -> cs -> [eli] -> el -> stm
 }
+
 
 data ExpAlgebra exp = ExpAlgebra {
     lor :: exp -> exp -> exp

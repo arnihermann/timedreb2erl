@@ -8,21 +8,17 @@ import qualified Language.Rebeca.Fold as F
 import qualified Language.Rebeca.Absrebeca as R
 
 
-
--- todo: env vars should be record?
--- todo: knownrebecs should be record?
 standardModel :: ModelAlgebra Exp Exp Exp Exp Exp Exp Function Function Function Exp Function Program
 standardModel = ModelAlgebra {
     model           = \envs rcs mai     -> Program (Module "test") [Export "none"] [Import "none"] (rcs ++ [mai])
   , envVar          = \tp               -> ExpVal $ AtomicLiteral "env"
   , reactiveClass   = \id kr sv msi ms  -> Function "reactiveclass" [PatVar "whoo"] (ExpVal $ AtomicLiteral "return this")
-  , knownRebecs     = \_                -> ExpVal $ AtomicLiteral "knownrebecs"
-  , stateVars       = \_                -> ExpVal $ AtomicLiteral "statevars"
+  , knownRebecs     = \tvds             -> ExpVal $ AtomicLiteral "knownrebecs"
+  , stateVars       = \tvds             -> ExpVal $ AtomicLiteral "statevars"
   , msgSrvInit      = \tps stms         -> Function "initial" [] (ExpVal $ AtomicLiteral "return this")
   , msgSrv          = \id tps stms      -> Function "msgsrvs" [] (ExpVal $ AtomicLiteral "return this")
   , main            = \_                -> Function "main" [] (ExpVal $ AtomicLiteral "return main")
 }
-
 
 
 standardStm :: StmAlgebra Exp Exp Exp Exp Exp Exp Exp Exp Exp
@@ -33,7 +29,6 @@ standardStm = StmAlgebra {
   , delay   = \exp                  -> FunAnon [PatVar "StateVars", PatVar "LocalVars"] (ExpVal $ AtomicLiteral "return this")
   , sel     = \exp cs elseifs els   -> FunAnon [PatVar "StateVars", PatVar "LocalVars"] (ExpVal $ AtomicLiteral "return this")
 }
-
 
 
 standardExp :: ExpAlgebra Exp
@@ -120,3 +115,7 @@ ds mA sA eA = F.RebecaAlgebra {
 
 
 rebecaAlgebra = ds standardModel standardStm standardExp
+
+
+-- testing a simple fold
+testFold = F.foldModel rebecaAlgebra (R.Model [] [] (R.Main []))

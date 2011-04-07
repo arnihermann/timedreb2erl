@@ -72,7 +72,7 @@ foldMsgSrvInit              :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp 
 foldMsgSrv                  :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> MsgSrv             -> ms
 foldExp                     :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> Exp                -> exp
 foldTypedVarDecl            :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> TypedVarDecl       -> tvd
-foldTypedParameter          :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> TypedParameter     -> tvp
+foldTypedParameter          :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> TypedParameter     -> tp
 foldAfter                   :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> After              -> aft
 foldDeadline                :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> Deadline           -> dea
 foldStm                     :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> Stm                -> stm
@@ -84,7 +84,7 @@ foldMain                    :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp 
 
 
 foldModel f (Model vars classes mainbody) = modelF f (map (foldEnv f) vars) (map (foldReactiveClass f) classes) (foldMain f mainbody)
-foldEnv f env = undefined -- envVarF f env
+foldEnv f (EnvVar tp) = envVarF f (foldTypedParameter f tp)
 foldReactiveClass f (ReactiveClass name _ kr sv msi ms) = reactiveClassF f (foldIdent f name) (foldKnownRebecs f kr) (foldStateVars f sv) (foldMsgSrvInit f msi) (map (foldMsgSrv f) ms)
 foldKnownRebecs f (KnownRebecs tvds) = knownRebecsF f (map (foldTypedVarDecl f) tvds)
 foldStateVars f (StateVars tvds) = stateVarsF f (map (foldTypedVarDecl f) tvds)
