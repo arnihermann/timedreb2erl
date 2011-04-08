@@ -2,32 +2,47 @@ module Language.Rebeca.Translation.Erlang.Standard where
 
 import Prelude hiding (div, mod, const)
 
+import Control.Applicative
+
 import Language.Erlang.Syntax
 import Language.Rebeca.Algebra
 import qualified Language.Rebeca.Fold as F
 import qualified Language.Rebeca.Absrebeca as R
 
 
-standardModel :: ModelAlgebra Exp Exp Exp Exp Exp Exp Function Function Function Exp Function Program
+standardModel :: ModelAlgebra Name Pattern Pattern Pattern Pattern Pattern [Function] Function Function Exp Function Program
 standardModel = ModelAlgebra {
-    model           = \envs rcs mai     -> Program (Module "test") [Export "none"] [Import "none"] (rcs ++ [mai])
-  , envVar          = \tp               -> ExpVal $ AtomicLiteral "env"
-  , reactiveClass   = \id kr sv msi ms  -> Function "reactiveclass" [PatVar "whoo"] (ExpVal $ AtomicLiteral "return this")
-  , knownRebecs     = \tvds             -> ExpVal $ AtomicLiteral "knownrebecs"
-  , stateVars       = \tvds             -> ExpVal $ AtomicLiteral "statevars"
+    model           = \envs rcs mai     -> Program (Module "test") [Export "none"] [Import "none"] (concat rcs ++ [mai])
+  , envVar          = \tp               -> PatVar "env"
+  , reactiveClass   = \id kr sv msi ms  -> [ Function id [PatVar "Env", PatVar "InstanceName"] (Receive [Match kr Nothing (ExpVal $ AtomicLiteral "test")])
+                                           , Function id [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs"] (ExpVal $ AtomicLiteral "initState")
+                                           , Function id [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs", PatVar "StateVars"] (ExpVal $ AtomicLiteral "reactiveState")
+                                           ]
+  , knownRebecs     = \tvds             -> PatT tvds
+  , stateVars       = \tvds             -> PatT tvds
   , msgSrvInit      = \tps stms         -> Function "initial" [] (ExpVal $ AtomicLiteral "return this")
   , msgSrv          = \id tps stms      -> Function "msgsrvs" [] (ExpVal $ AtomicLiteral "return this")
   , main            = \_                -> Function "main" [] (ExpVal $ AtomicLiteral "return main")
 }
 
+standardVal :: ValAlgebra String Pattern Pattern
+standardVal = ValAlgebra {
+    typedVarDecl    = \tvd -> case tvd of
+                                R.TypedVarDecl typeName (R.Ident id) -> PatVar id
+                                R.TypedVarDeclAss typeName (R.Ident id) exp -> PatVar id -- TODO
+  , typedParameter  = \tp -> error "tp"
+  , ident           = \id -> id    
+}
 
-standardStm :: StmAlgebra Exp Exp Exp Exp Exp Exp Exp Exp Exp
+standardStm :: StmAlgebra String Exp Pattern (Maybe Exp) (Maybe Exp) Exp Exp Exp Exp
 standardStm = StmAlgebra {
-    ass     = \id exp               -> FunAnon [PatVar "StateVars", PatVar "LocalVars"] (ExpVal $ AtomicLiteral "return this")
-  , local   = \tvd                  -> FunAnon [PatVar "StateVars", PatVar "LocalVars"] (ExpVal $ AtomicLiteral "return this")
-  , call    = \id0 id expr aft dea  -> FunAnon [PatVar "StateVars", PatVar "LocalVars"] (ExpVal $ AtomicLiteral "return this")
-  , delay   = \exp                  -> FunAnon [PatVar "StateVars", PatVar "LocalVars"] (ExpVal $ AtomicLiteral "return this")
-  , sel     = \exp cs elseifs els   -> FunAnon [PatVar "StateVars", PatVar "LocalVars"] (ExpVal $ AtomicLiteral "return this")
+    ass         = \id exp               -> FunAnon [PatVar "StateVars", PatVar "LocalVars"] (ExpVal $ AtomicLiteral "return this")
+  , local       = \tvd                  -> FunAnon [PatVar "StateVars", PatVar "LocalVars"] (ExpVal $ AtomicLiteral "return this")
+  , call        = \id0 id expr aft dea  -> FunAnon [PatVar "StateVars", PatVar "LocalVars"] (ExpVal $ AtomicLiteral "return this")
+  , after       = \mexp                 -> mexp
+  , deadline    = \mdea                 -> mdea
+  , delay       = \exp                  -> FunAnon [PatVar "StateVars", PatVar "LocalVars"] (ExpVal $ AtomicLiteral "return this")
+  , sel         = \exp cs elseifs els   -> FunAnon [PatVar "StateVars", PatVar "LocalVars"] (ExpVal $ AtomicLiteral "return this")
 }
 
 
@@ -69,9 +84,10 @@ standardExp = ExpAlgebra {
 
 ds :: ModelAlgebra id tvd tp env kr sv rc msi ms stm mai mod
     -> StmAlgebra id exp tvd aft dea cs eli el stm
+    -> ValAlgebra id tvd tp
     -> ExpAlgebra exp
     -> F.RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai 
-ds mA sA eA = F.RebecaAlgebra {
+ds mA sA vA eA = F.RebecaAlgebra {
     F.modelF            = \envs rcs mai     -> model mA envs rcs mai
   , F.envVarF           = \tp               -> envVar mA tp
   , F.reactiveClassF    = \id kr sv msi ms  -> reactiveClass mA id kr sv msi ms
@@ -80,6 +96,10 @@ ds mA sA eA = F.RebecaAlgebra {
   , F.msgSrvInitF       = \tps stms         -> msgSrvInit mA tps stms
   , F.msgSrvF           = \id tps stms      -> msgSrv mA id tps stms
   , F.mainF             = \mai              -> main mA mai
+
+  , F.typedVarDeclF     = \tvd  -> typedVarDecl vA tvd
+  , F.typedParameterF   = \tp   -> typedParameter vA tp
+  , F.identF            = \id   -> ident vA id
 
   , F.assF      = \id exp               -> ass sA id exp
   , F.localF    = \tvd                  -> local sA tvd
@@ -114,8 +134,5 @@ ds mA sA eA = F.RebecaAlgebra {
 }
 
 
-rebecaAlgebra = ds standardModel standardStm standardExp
+rebecaAlgebra = ds standardModel standardStm standardVal standardExp
 
-
--- testing a simple fold
-testFold = F.foldModel rebecaAlgebra (R.Model [] [] (R.Main []))

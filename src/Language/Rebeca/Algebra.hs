@@ -19,10 +19,17 @@ data StmAlgebra id exp tvd aft dea cs eli el stm = StmAlgebra {
     ass :: id -> exp -> stm
   , local :: tvd -> stm
   , call :: id -> id -> [exp] -> aft -> dea -> stm
+  , after :: Maybe exp -> aft
+  , deadline :: Maybe exp -> dea
   , delay :: exp -> stm
   , sel :: exp -> cs -> [eli] -> el -> stm
 }
 
+data ValAlgebra id tvd tp = ValAlgebra {
+    typedVarDecl :: R.TypedVarDecl -> tvd
+  , typedParameter :: R.TypedParameter -> tp
+  , ident :: String -> id
+}
 
 data ExpAlgebra exp = ExpAlgebra {
     lor :: exp -> exp -> exp

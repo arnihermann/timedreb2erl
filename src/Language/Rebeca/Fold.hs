@@ -31,9 +31,15 @@ data RebecaAlgebra
   , msgSrvF :: id -> [tp] -> [stm] -> ms
   , mainF :: Main -> mai
 
+  , typedVarDeclF :: TypedVarDecl -> tvd
+  , typedParameterF :: TypedParameter -> tp
+  , identF :: String -> id
+
   , assF :: id -> exp -> stm
   , localF :: tvd -> stm
   , callF :: id -> id -> [exp] -> aft -> dea -> stm
+  , afterF :: Maybe exp -> aft
+  , deadlineF :: Maybe exp -> dea
   , delayF :: exp -> stm
   , selF :: exp -> cs -> [eli] -> el -> stm
 
@@ -117,18 +123,24 @@ foldExp f Enow = nowF f
 -- foldExp f (Econst constant) = constF (foldExp f constant)
 -- foldExp f (Evar idents) = varF (map (foldIdent f) idents)
 
-foldTypedVarDecl f _ = undefined
-foldTypedParameter f _ = undefined
-foldAfter f _ = undefined
-foldDeadline f _ = undefined
+foldTypedVarDecl f tvd = typedVarDeclF f tvd
+foldTypedParameter f tp = typedParameterF f tp
+
+foldAfter f aft = afterF f $ case aft of
+    NoAfter -> Nothing
+    WithAfter exp -> Just (foldExp f exp)
+foldDeadline f aft = deadlineF f $ case aft of
+    NoDeadline -> Nothing
+    WithDeadline exp -> Just (foldExp f exp)
+
 foldStm f (Ass id op exp) = assF f (foldIdent f id) (foldExp f exp)
 foldStm f (Local var) = localF f (foldTypedVarDecl f var)
 foldStm f (Call id0 id exps after deadline) = callF f (foldIdent f id0) (foldIdent f id) (map (foldExp f) exps) (foldAfter f after) (foldDeadline f deadline)
 foldStm f (Delay exp) = delayF f (foldExp f exp)
 foldStm f (Sel exp cs elif el) = selF f (foldExp f exp) (foldCompStm f cs) (map (foldElseifStm f) elif) (foldElseStm f el)
-foldCompStm f cs = undefined
-foldElseStm f el = undefined
-foldElseifStm f eli = undefined
+foldCompStm f cs = error "fold comp stm"
+foldElseStm f el = error "fold else"
+foldElseifStm f eli = error "fold elseif"
 
-foldIdent f id = undefined
+foldIdent f (Ident s) = identF f s
 

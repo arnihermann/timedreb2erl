@@ -17,12 +17,16 @@ import qualified Generator.Discrete as Dis
 import qualified Generator.Simulation as Sim
 import qualified Generator.Spirit as Spi
 
+import qualified Language.Erlang.Pretty as P
+import qualified Language.Rebeca.Fold as F
+import qualified Language.Rebeca.Translation.Erlang.Standard as S
+
 fromFile :: FilePath -> IO Model
 fromFile f = fromString <$> readFile f
   where
     fromString s = let ts = myLexer s in case pModel ts of
         Bad _ -> error $ "Could not parse model" ++ show ts
-        Ok tree -> tree    
+        Ok tree -> tree
 
 runErlang :: Generator -> FilePath -> FilePath -> IO ()
 runErlang gen dir f = do
@@ -66,7 +70,7 @@ data Params = Params
     , genrecords :: Bool
     , genrun :: Bool
     , genmonitor :: Bool
-    , generator :: String
+    {-, generator :: String-}
     , modelFile :: String
     , outputDir :: FilePath
     } deriving (Data, Typeable, Show)
@@ -76,7 +80,7 @@ params = cmdArgsMode $ Params
     , genrecords = False
     , genrun = False
     , genmonitor = False
-    , generator = "" &= argPos 0 &= typ "GENERATOR" -- &= help "simulation/discrete/spirit"
+    {-, generator = "" &= argPos 0 &= typ "GENERATOR" -- &= help "simulation/discrete/spirit"-}
     , modelFile = "" &= argPos 1 &= typ "FILE"
     , outputDir = "." &= typ "FOLDER"
     } &= program "timedreb2erl" &= summary "Timed Rebeca to erlang translator"
@@ -90,8 +94,12 @@ generators = [("simulation", Sim.transModel), ("discrete", Dis.transModel), ("sp
 main :: IO ()
 main = do
     Params{..} <- cmdArgsRun params
-    let Just gen = lookup generator generators
-    let acts = [(genmodel, runErlang), (genrecords, runRecords), (genrun, runRun), (genmonitor, runMonitor)]
-    createDirectoryIfMissing True outputDir
-    mapM_ (\a -> run outputDir modelFile (fst a) (snd a gen)) acts
+    mod <- fromFile modelFile
+    let pro = F.foldModel S.rebecaAlgebra mod
+    putStrLn $ P.renderProgram pro
+
+    {-let Just gen = lookup generator generators-}
+    {-let acts = [(genmodel, runErlang), (genrecords, runRecords), (genrun, runRun), (genmonitor, runMonitor)]-}
+    {-createDirectoryIfMissing True outputDir-}
+    {-mapM_ (\a -> run outputDir modelFile (fst a) (snd a gen)) acts-}
 
