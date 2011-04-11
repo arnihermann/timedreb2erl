@@ -12,6 +12,7 @@ reactiveclass SenderObj(3) {
 
     msgsrv initial() {
         self.start();
+        self.start2();
     }
 
     msgsrv start() {
