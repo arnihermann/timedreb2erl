@@ -51,7 +51,7 @@ data ExpAlgebra exp = ExpAlgebra {
   , div :: exp -> exp -> exp
   , mod :: exp -> exp -> exp
   , expcoercion :: exp -> exp
-  , nondet :: exp -> exp -> exp
+  , nondet :: [exp] -> exp
   , preop :: R.UnaryOperator -> exp -> exp
   , now :: exp
   , const :: exp -> exp

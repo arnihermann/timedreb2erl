@@ -10,17 +10,24 @@ import qualified Language.Rebeca.Fold as F
 import qualified Language.Rebeca.Absrebeca as R
 
 
-standardModel :: ModelAlgebra Name Pattern Pattern Pattern Pattern Pattern [Function] Function Function Exp Function Program
+standardModel :: ModelAlgebra Name Pattern Pattern Pattern Pattern Pattern [Function] Match Function Exp Function Program
 standardModel = ModelAlgebra {
     model           = \envs rcs mai     -> Program (Module "test") [Export "none"] [Import "none"] (concat rcs ++ [mai])
   , envVar          = \tp               -> PatVar "env"
-  , reactiveClass   = \id kr sv msi ms  -> [ Function id [PatVar "Env", PatVar "InstanceName"] (Receive [Match kr Nothing (ExpVal $ AtomicLiteral "test")])
-                                           , Function id [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs"] (ExpVal $ AtomicLiteral "initState")
-                                           , Function id [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs", PatVar "StateVars"] (ExpVal $ AtomicLiteral "reactiveState")
+  , reactiveClass   = \id kr sv msi ms  -> [ Function id [PatVar "Env", PatVar "InstanceName"] $
+                                                Receive [ Match kr Nothing $
+                                                            Apply id [ ExpVar "Env", ExpVar "InstanceName"
+                                                                     , RecordUpdate Nothing id [Assign (PatVal $ AtomicLiteral "foo") (ExpVar "bar")]
+                                                                     ]
+                                                        ]
+                                           , Function id [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs"] $
+                                                Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive [msi])
+                                           , Function id [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs", PatVar "StateVars"] $
+                                                Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (ExpVal $ AtomicLiteral "reactiveState")
                                            ]
   , knownRebecs     = \tvds             -> PatT tvds
   , stateVars       = \tvds             -> PatT tvds
-  , msgSrvInit      = \tps stms         -> Function "initial" [] (ExpVal $ AtomicLiteral "return this")
+  , msgSrvInit      = \tps stms         -> Match (PatT $ (PatVal $ AtomicLiteral "initial"):tps) Nothing (foldr Call (ExpT [ExpVar "StateVars", ExpVar "LocalVars"]) stms)
   , msgSrv          = \id tps stms      -> Function "msgsrvs" [] (ExpVal $ AtomicLiteral "return this")
   , main            = \_                -> Function "main" [] (ExpVal $ AtomicLiteral "return main")
 }
@@ -36,9 +43,11 @@ standardVal = ValAlgebra {
 
 standardStm :: StmAlgebra String Exp Pattern (Maybe Exp) (Maybe Exp) Exp Exp Exp Exp
 standardStm = StmAlgebra {
-    ass         = \id exp               -> FunAnon [PatVar "StateVars", PatVar "LocalVars"] (ExpVal $ AtomicLiteral "return this")
+    ass         = \id exp               -> FunAnon [PatVar "StateVars", PatVar "LocalVars"] exp
   , local       = \tvd                  -> FunAnon [PatVar "StateVars", PatVar "LocalVars"] (ExpVal $ AtomicLiteral "return this")
-  , call        = \id0 id expr aft dea  -> FunAnon [PatVar "StateVars", PatVar "LocalVars"] (ExpVal $ AtomicLiteral "return this")
+  , call        = \id0 id exps aft dea  -> FunAnon [PatVar "StateVars", PatVar "LocalVars"] $ case aft of -- TODO lookup id0
+                                                Nothing -> Apply "tr_send" ((ExpVar id0):(ExpVal $ AtomicLiteral id):exps)
+                                                Just aft' -> Apply "tr_sendafter" ((ExpVar id0):(ExpVal $ AtomicLiteral id):exps)
   , after       = \mexp                 -> mexp
   , deadline    = \mdea                 -> mdea
   , delay       = \exp                  -> FunAnon [PatVar "StateVars", PatVar "LocalVars"] (ExpVal $ AtomicLiteral "return this")
@@ -67,7 +76,7 @@ standardExp = ExpAlgebra {
   , div         = \exp0 exp -> ExpVal $ AtomicLiteral "div"
   , mod         = \exp0 exp -> ExpVal $ AtomicLiteral "mod"
   , expcoercion = \exp      -> ExpVal $ AtomicLiteral "expcoercion"
-  , nondet      = \exp0 exp -> ExpVal $ AtomicLiteral "nondet"
+  , nondet      = \exps     -> ExpVal $ AtomicLiteral "nondet"
   , preop       = \_ exp    -> ExpVal $ AtomicLiteral "preop" -- :: R.UnaryOperator -> exp -> exp
   , now         =              ExpVal $ AtomicLiteral "now"
   , const       = \exp      -> ExpVal $ AtomicLiteral "const"
@@ -104,6 +113,8 @@ ds mA sA vA eA = F.RebecaAlgebra {
   , F.assF      = \id exp               -> ass sA id exp
   , F.localF    = \tvd                  -> local sA tvd
   , F.callF     = \id0 id expr aft dea  -> call sA id0 id expr aft dea
+  , F.afterF    = \mexp                 -> after sA mexp
+  , F.deadlineF = \mexp                 -> deadline sA mexp
   , F.delayF    = \exp                  -> delay sA exp
   , F.selF      = \exp cs elseifs els   -> sel sA exp cs elseifs els
 
@@ -126,7 +137,7 @@ ds mA sA vA eA = F.RebecaAlgebra {
   , F.divF          = \exp0 exp -> div eA exp0 exp
   , F.modF          = \exp0 exp -> mod eA exp0 exp
   , F.expcoercionF  = \exp      -> expcoercion eA exp
-  , F.nondetF       = \exp0 exp -> nondet eA exp0 exp
+  , F.nondetF       = \exps     -> nondet eA exps
   , F.preopF        =              undefined -- \aop exp -> preop eA aop exp
   , F.nowF          =              now eA
   , F.constF        = \exp      -> const eA exp

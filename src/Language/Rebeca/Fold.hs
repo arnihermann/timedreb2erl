@@ -62,7 +62,7 @@ data RebecaAlgebra
   , divF :: exp -> exp -> exp
   , modF :: exp -> exp -> exp
   , expcoercionF :: exp -> exp
-  , nondetF :: exp -> exp -> exp
+  , nondetF :: [exp] -> exp
   , preopF :: UnaryOperator -> exp -> exp
   , nowF :: exp
   , constF :: exp -> exp
@@ -117,8 +117,8 @@ foldExp f (Etimes exp0 exp) = timesF f (foldExp f exp0) (foldExp f exp)
 foldExp f (Ediv exp0 exp) = divF f (foldExp f exp0) (foldExp f exp)
 foldExp f (Emod exp0 exp) = modF f (foldExp f exp0) (foldExp f exp)
 foldExp f (Eexpcoercion exp) = expcoercionF f (foldExp f exp)
--- foldExp f (ENondet exps) = nondetF (foldExp f exps)
--- foldExp f (Epreop op exp) = preopF (foldExp f op) (foldExp f exp)
+foldExp f (ENondet exps) = nondetF f (map (foldExp f) exps)
+foldExp f (Epreop op exp) = preopF f op (foldExp f exp)
 foldExp f Enow = nowF f
 -- foldExp f (Econst constant) = constF (foldExp f constant)
 -- foldExp f (Evar idents) = varF (map (foldIdent f) idents)

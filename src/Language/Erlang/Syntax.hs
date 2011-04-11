@@ -30,6 +30,7 @@ data InfixOp = OpLT | OpLEq | OpGT | OpGEq | OpEq | OpNEq | OpLAnd | OpLOr
 
 data Exp = InfixExp InfixOp Exp Exp
     | Apply Name [Exp]
+    | Call Exp Exp
     | Case Exp [Match]
     | FunAnon [Pattern] Exp
     | Receive [Match]
@@ -41,6 +42,8 @@ data Exp = InfixExp InfixOp Exp Exp
     | ExpL [Exp] -- list
     | ExpVal BasicValue -- value
     | ExpVar Name -- variable
+    | RecordAccess (Maybe Exp) Name Name
+    | RecordUpdate (Maybe Exp) Name [Exp]
   deriving (Eq,Ord,Show,Data,Typeable)
 
 data Match = Match Pattern (Maybe Guard) Exp
