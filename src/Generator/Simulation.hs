@@ -254,8 +254,8 @@ transExp x = case x of
     Eneq exp0 exp -> transBinExp exp0 exp "=/="
     Elthen exp0 exp -> transBinExp exp0 exp "<"
     Egrthen exp0 exp -> transBinExp exp0 exp ">"
-    Ele exp0 exp -> error "Ele not implemented"
-    Ege exp0 exp -> error "Ege not implemented"
+    Ele exp0 exp -> transBinExp exp0 exp "<="
+    Ege exp0 exp -> transBinExp exp0 exp "=>"
     Eleft exp0 exp -> error "Eleft not implemented"
     Eright exp0 exp -> error "Eright not implemented"
     Eplus exp0 exp ->
