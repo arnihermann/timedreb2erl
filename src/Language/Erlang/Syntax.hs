@@ -42,17 +42,16 @@ data Exp = InfixExp InfixOp Exp Exp
     | ExpL [Exp] -- list
     | ExpVal BasicValue -- value
     | ExpVar Name -- variable
-    | RecordAccess (Maybe Exp) Name Name
-    | RecordUpdate (Maybe Exp) Name [Exp]
   deriving (Eq,Ord,Show,Data,Typeable)
 
 data Match = Match Pattern (Maybe Guard) Exp
   deriving (Eq,Ord,Show,Data,Typeable)
 
-data Pattern = PatVar String
+data Pattern = PatVar Name
     | PatT [Pattern] -- tuple
     | PatL [Pattern] -- list
     | PatVal BasicValue
+    | PatE Exp -- escape hatch (beware!)
   deriving (Eq,Ord,Show,Data,Typeable)
 
 data Guard = InfixGuard Guard Guard

@@ -36,12 +36,13 @@ pattern (PatVar s) = text (firstUpper s)
 pattern (PatT ps) = braces (commaSep $ map pattern ps)
 pattern (PatL ps) = brackets (commaSep $ map pattern ps)
 pattern (PatVal v) = val v
+pattern (PatE e) = expr e
 
 infop op = text $ case op of
     OpLT -> "<"
-    OpLEq -> "LEQ"
+    OpLEq -> "<="
     OpGT -> ">"
-    OpGEq -> "GEQ" 
+    OpGEq -> "=>" 
     OpEq -> "==" 
     OpNEq -> "=/=" 
     OpLAnd -> "andalso" 
@@ -59,7 +60,7 @@ match (Match pat guard exp) = pattern pat <+> text "->" <+> expr exp
 
 expr (InfixExp op exp0 exp) = expr exp0 <+> infop op <+> expr exp
 expr (Apply name exps) = text name <> (parens $ commaSep (map expr exps))
-expr (Call exp0 exp) = expr exp0 <+> (parens $ expr exp)
+expr (Call exp0 exp) = expr exp0 <> (parens $ expr exp)
 expr (Case exp ms) = text "case" <+> expr exp <+> text "of" -- TODO
 expr (FunAnon ps exp) = text "fun" <> (parens $ commaSep (map pattern ps)) <+> text "->"
     $+$ inBlock1 (expr exp)
@@ -78,9 +79,6 @@ expr (ExpL exps) = brackets $ commaSep (map expr exps)
 expr (ExpVal v) = val v
 expr (ExpVar "self") = text "self" <> parens empty
 expr (ExpVar name) = text $ firstUpper name
-expr (RecordAccess var rec field) = text "#" <> text rec <> dot <> text field
-expr (RecordUpdate var rec exps) = text "#" <> text rec <> (braces $ commaSep (map expr exps))
-
 
 func (Function name formals exp) = text (firstLower name) <> (parens $ commaSep $ map pattern formals) <+> text "->" $+$ inBlock [expr exp]
 

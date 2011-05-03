@@ -23,6 +23,7 @@ data StmAlgebra id exp tvd aft dea cs eli el stm = StmAlgebra {
   , deadline :: Maybe exp -> dea
   , delay :: exp -> stm
   , sel :: exp -> cs -> [eli] -> el -> stm
+  , compStm :: [stm] -> cs
 }
 
 data ValAlgebra id tvd tp = ValAlgebra {
@@ -31,7 +32,7 @@ data ValAlgebra id tvd tp = ValAlgebra {
   , ident :: String -> id
 }
 
-data ExpAlgebra exp = ExpAlgebra {
+data ExpAlgebra id exp = ExpAlgebra {
     lor :: exp -> exp -> exp
   , land :: exp -> exp -> exp
   , bitor :: exp -> exp -> exp
@@ -54,7 +55,7 @@ data ExpAlgebra exp = ExpAlgebra {
   , nondet :: [exp] -> exp
   , preop :: R.UnaryOperator -> exp -> exp
   , now :: exp
-  , const :: exp -> exp
-  , var :: R.Exp -> exp
+  , const :: R.Constant -> exp
+  , var :: [id] -> exp
 }
 

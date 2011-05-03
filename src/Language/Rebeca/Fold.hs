@@ -42,6 +42,7 @@ data RebecaAlgebra
   , deadlineF :: Maybe exp -> dea
   , delayF :: exp -> stm
   , selF :: exp -> cs -> [eli] -> el -> stm
+  , compStmF :: [stm] -> cs
 
   , lorF :: exp -> exp -> exp
   , landF :: exp -> exp -> exp
@@ -65,8 +66,8 @@ data RebecaAlgebra
   , nondetF :: [exp] -> exp
   , preopF :: UnaryOperator -> exp -> exp
   , nowF :: exp
-  , constF :: exp -> exp
-  , varF :: Exp -> exp
+  , constF :: Constant -> exp
+  , varF :: [id] -> exp
 }
 
 foldModel                   :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> Model              -> mod
@@ -120,8 +121,8 @@ foldExp f (Eexpcoercion exp) = expcoercionF f (foldExp f exp)
 foldExp f (ENondet exps) = nondetF f (map (foldExp f) exps)
 foldExp f (Epreop op exp) = preopF f op (foldExp f exp)
 foldExp f Enow = nowF f
--- foldExp f (Econst constant) = constF (foldExp f constant)
--- foldExp f (Evar idents) = varF (map (foldIdent f) idents)
+foldExp f (Econst constant) = constF f constant
+foldExp f (Evar idents) = varF f (map (foldIdent f) idents)
 
 foldTypedVarDecl f tvd = typedVarDeclF f tvd
 foldTypedParameter f tp = typedParameterF f tp
@@ -138,7 +139,10 @@ foldStm f (Local var) = localF f (foldTypedVarDecl f var)
 foldStm f (Call id0 id exps after deadline) = callF f (foldIdent f id0) (foldIdent f id) (map (foldExp f) exps) (foldAfter f after) (foldDeadline f deadline)
 foldStm f (Delay exp) = delayF f (foldExp f exp)
 foldStm f (Sel exp cs elif el) = selF f (foldExp f exp) (foldCompStm f cs) (map (foldElseifStm f) elif) (foldElseStm f el)
-foldCompStm f cs = error "fold comp stm"
+foldCompStm f cs = compStmF f $ case cs of
+    SingleCompoundStm stm -> [foldStm f stm]
+    MultCompoundStm stms -> map (foldStm f) stms
+
 foldElseStm f el = error "fold else"
 foldElseifStm f eli = error "fold elseif"
 
