@@ -17,6 +17,7 @@ reactiveclass SenderObj(3) {
     msgsrv start() {
         time t = ?(-1,sendDelay-1,sendDelay,sendDelay+1); // -1=fail -- 2,3,4=delays
         if (t != -1) {
+            //delay(2); // EXAMPLE OF COMPSTM
             receiverObj.send() after(t);
         }
         delay(8);

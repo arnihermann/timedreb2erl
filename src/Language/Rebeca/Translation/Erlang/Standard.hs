@@ -9,6 +9,7 @@ import Language.Rebeca.Algebra
 import qualified Language.Rebeca.Fold as F
 import qualified Language.Rebeca.Absrebeca as R
 
+-- TODO: add some kind of look environment (a state) to the equation
 
 standardModel :: ModelAlgebra Name String String String [Name] [Name] [Function] Match Match Exp Function Program
 standardModel = ModelAlgebra {
@@ -27,8 +28,8 @@ standardModel = ModelAlgebra {
                                            ]
   , knownRebecs     = \tvds             -> tvds
   , stateVars       = \tvds             -> tvds
-  , msgSrvInit      = \tps stms         -> Match (PatT $ (PatVal $ AtomicLiteral "initial"):(map PatVar tps)) Nothing (foldr Call (ExpT [ExpVar "StateVars", ExpVar "LocalVars"]) (reverse stms))
-  , msgSrv          = \id tps stms      -> Match (PatT $ (PatVal $ AtomicLiteral id):(map PatVar tps)) Nothing (foldr Call (ExpT [ExpVar "StateVars", ExpVar "LocalVars"]) (reverse stms))
+  , msgSrvInit      = \tps stms         -> Match (PatT $ (PatVal $ AtomicLiteral "initial"):(map PatVar tps)) Nothing (ap $ reverse stms)
+  , msgSrv          = \id tps stms      -> Match (PatT $ (PatVal $ AtomicLiteral id):(map PatVar tps)) Nothing (ap $ reverse stms)
   , main            = \_                -> Function "main" [] (ExpVal $ AtomicLiteral "return main")
 }
 
@@ -36,14 +37,14 @@ standardVal :: ValAlgebra String String String
 standardVal = ValAlgebra {
     typedVarDecl    = \tvd -> case tvd of
                                 R.TypedVarDecl typeName (R.Ident id) -> id
-                                R.TypedVarDeclAss typeName (R.Ident id) exp -> id -- TODO
+                                R.TypedVarDeclAss typeName (R.Ident id) exp -> id -- TODO, return Either String (String, String) ?
   , typedParameter  = \tp -> error "tp"
   , ident           = \id -> id    
 }
 
 standardStm :: StmAlgebra String Exp String (Maybe Exp) (Maybe Exp) Exp Exp Exp Exp
 standardStm = StmAlgebra {
-    ass         = \id exp               -> stm $ exp
+    ass         = \id exp               -> stm $ Apply "dict:store" [ExpVal $ AtomicLiteral id, exp, ExpVar "StateVars"]
   , local       = \tvd                  -> stm $ (ExpVal $ AtomicLiteral "return this")
   , call        = \id0 id exps aft dea  -> stm $ case aft of -- TODO lookup id0
                                                 Nothing -> Seq (Apply "tr_send" [ExpVar id0, ExpVal $ AtomicLiteral id, ExpT exps]) retstm
@@ -52,10 +53,15 @@ standardStm = StmAlgebra {
   , deadline    = id
   , delay       = \exp                  -> stm $ Seq (Apply "tr_delay" [exp]) retstm
   , sel         = \exp cs elseifs els   -> stm $ If [Match (PatE exp) Nothing cs]
-  , compStm     = \stms                 -> stm $ (ExpVal $ AtomicLiteral "compstm!")
+  , compStm     = \stms                 -> case stms of
+                                                [] -> retstm
+                                                [stm] -> Call stm params
+                                                _ -> ap $ reverse stms
 }
 
-stm = FunAnon [PatVar "StateVars", PatVar "LocalVars"]
+params = ExpT [ExpVar "StateVars", ExpVar "LocalVars"]
+stm = FunAnon [PatT [PatVar "StateVars", PatVar "LocalVars"]]
+ap = foldr Call params
 retstm = ExpT [ExpVar "StateVars", ExpVar "LocalVars"]
 
 standardExp :: ExpAlgebra String Exp
