@@ -57,20 +57,40 @@ data RebecaAlgebra
         mai -- result for main
         ins -- result for instance decl
     = RebecaAlgebra {
-    identF :: String -> id        
+    identF :: String -> id
+
   , modelF :: [env] -> [rc] -> mai -> mod
+
   , envVarF :: tp -> env
+
   , reactiveClassF :: id -> kr -> sv -> msi -> [ms] -> rc
+
+  , noKnownRebecsF :: kr
   , knownRebecsF :: [tvd] -> kr
+
+  , noStateVarsF :: sv
   , stateVarsF :: [tvd] -> sv
+
   , msgSrvInitF :: [tp] -> [stm] -> msi
+
   , msgSrvF :: id -> [tp] -> [stm] -> ms
-  , mainF :: Main -> mai
 
-  , typedVarDeclF :: TypedVarDecl -> tvd
-  , typedParameterF :: TypedParameter -> tp
+  , vDeclAssignF :: id -> exp -> vd
+  , vDeclF :: id -> vd
 
-  , assF :: id -> exp -> stm
+  , typedVarDeclF :: tn -> id -> tvd
+  , typedVarDeclAssF :: tn -> id -> exp -> tvd
+
+  , typedParameterF :: tn -> id -> tp
+
+  , basicTypeIntF :: bt
+  , basicTypeTimeF :: bt
+  , basicTypeBooleanF :: bt
+
+  , builtInF :: bt -> tn
+  , classTypeF :: id -> tn
+
+  , assF :: id -> aop -> exp -> stm
   , localF :: tvd -> stm
   , callF :: id -> id -> [exp] -> aft -> dea -> stm
   , delayF :: exp -> stm
@@ -84,6 +104,11 @@ data RebecaAlgebra
 
   , noDeadlineF :: dea
   , withDeadlineF :: exp -> dea
+
+  , elseifStmF :: exp -> cs -> eli
+
+  , emptyElseStmF :: el
+  , elseStmF :: cs -> el
 
   , lorF :: exp -> exp -> exp
   , landF :: exp -> exp -> exp
@@ -105,10 +130,30 @@ data RebecaAlgebra
   , modF :: exp -> exp -> exp
   , expcoercionF :: exp -> exp
   , nondetF :: [exp] -> exp
-  , preopF :: UnaryOperator -> exp -> exp
+  , preopF :: uop -> exp -> exp
   , nowF :: exp
-  , constF :: Constant -> exp
+  , constF :: con -> exp
   , varF :: [id] -> exp
+
+  , constantIntF :: Integer -> con
+  , constantTrueF :: con
+  , constantFalseF :: con
+
+  , unaryPlusF :: uop
+  , unaryNegativeF :: uop
+  , unaryComplementF :: uop
+  , unaryLogicalNegF :: uop
+
+  , opAssignF :: aop
+  , opAssignMulF :: aop
+  , opAssignDivF :: aop
+  , opAssignModF :: aop
+  , opAssignAddF :: aop
+  , opAssignSubF :: aop
+
+  , mainF :: [ins] -> mai
+
+  , instanceDeclF :: tvd -> [vd] -> [exp] -> ins
 }
 
 foldIdent           :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> Ident          -> id
@@ -145,25 +190,32 @@ foldEnv f (EnvVar tp) = envVarF f (foldTypedParameter f tp)
 
 foldReactiveClass f (ReactiveClass name _ kr sv msi ms) = reactiveClassF f (foldIdent f name) (foldKnownRebecs f kr) (foldStateVars f sv) (foldMsgSrvInit f msi) (map (foldMsgSrv f) ms)
 
+foldKnownRebecs f NoKnownRebecs = noKnownRebecsF f
 foldKnownRebecs f (KnownRebecs tvds) = knownRebecsF f (map (foldTypedVarDecl f) tvds)
 
+foldStateVars f NoStateVars = noStateVarsF f
 foldStateVars f (StateVars tvds) = stateVarsF f (map (foldTypedVarDecl f) tvds)
 
 foldMsgSrvInit f (MsgSrvInit tps stms) = msgSrvInitF f (map (foldTypedParameter f) tps) (map (foldStm f) stms)
 
 foldMsgSrv f (MsgSrv id tps stms) = msgSrvF f (foldIdent f id) (map (foldTypedParameter f) tps) (map (foldStm f) stms)
 
-foldVarDecl f _ = error "fold: var decl"
+foldVarDecl f (VDeclAssign id exp) = vDeclAssignF f (foldIdent f id) (foldExp f exp)
+foldVarDecl f (VDecl id) = vDeclF f (foldIdent f id)
 
-foldTypedVarDecl f tvd = typedVarDeclF f tvd
+foldTypedVarDecl f (TypedVarDecl tn id) = typedVarDeclF f (foldTypeName f tn) (foldIdent f id)
+foldTypedVarDecl f (TypedVarDeclAss tn id exp) = typedVarDeclAssF f (foldTypeName f tn) (foldIdent f id) (foldExp f exp)
 
-foldTypedParameter f tp = typedParameterF f tp
+foldTypedParameter f (TypedParameter tn id) = typedParameterF f (foldTypeName f tn) (foldIdent f id)
 
-foldBasicType f _ = error "fold: basic type"
+foldBasicType f Tint = basicTypeIntF f
+foldBasicType f Ttime = basicTypeTimeF f
+foldBasicType f Tboolean = basicTypeBooleanF f
 
-foldTypeName f _ = error "fold: type name"
+foldTypeName f (BuiltIn bt) = builtInF f (foldBasicType f bt)
+foldTypeName f (ClassType id) = classTypeF f (foldIdent f id)
 
-foldStm f (Ass id op exp) = assF f (foldIdent f id) (foldExp f exp)
+foldStm f (Ass id aop exp) = assF f (foldIdent f id) (foldAssignmentOp f aop) (foldExp f exp)
 foldStm f (Local var) = localF f (foldTypedVarDecl f var)
 foldStm f (Call id0 id exps after deadline) = callF f (foldIdent f id0) (foldIdent f id) (map (foldExp f) exps) (foldAfter f after) (foldDeadline f deadline)
 foldStm f (Delay exp) = delayF f (foldExp f exp)
@@ -178,9 +230,10 @@ foldAfter f (WithAfter exp) = withAfterF f (foldExp f exp)
 foldDeadline f (NoDeadline) = noDeadlineF f
 foldDeadline f (WithDeadline exp) = withDeadlineF f (foldExp f exp)
 
-foldElseifStm f eli = error "fold: elseif"
+foldElseifStm f (ElseifStm exp cs) = elseifStmF f (foldExp f exp) (foldCompStm f cs)
 
-foldElseStm f el = error "fold: else"
+foldElseStm f EmptyElseStm = emptyElseStmF f
+foldElseStm f (ElseStm cs) = elseStmF f (foldCompStm f cs)
 
 foldExp f (Elor exp0 exp) = lorF f (foldExp f exp0) (foldExp f exp)
 foldExp f (Eland exp0 exp) = landF f (foldExp f exp0) (foldExp f exp)
@@ -202,18 +255,28 @@ foldExp f (Ediv exp0 exp) = divF f (foldExp f exp0) (foldExp f exp)
 foldExp f (Emod exp0 exp) = modF f (foldExp f exp0) (foldExp f exp)
 foldExp f (Eexpcoercion exp) = expcoercionF f (foldExp f exp)
 foldExp f (ENondet exps) = nondetF f (map (foldExp f) exps)
-foldExp f (Epreop op exp) = preopF f op (foldExp f exp)
+foldExp f (Epreop uop exp) = preopF f (foldUnaryOp f uop) (foldExp f exp)
 foldExp f Enow = nowF f
-foldExp f (Econst constant) = constF f constant
+foldExp f (Econst constant) = constF f (foldConstant f constant)
 foldExp f (Evar idents) = varF f (map (foldIdent f) idents)
 
-foldConstant f _ = error "fold: constant"
+foldConstant f (Eint i) = constantIntF f i
+foldConstant f Etrue = constantTrueF f
+foldConstant f Efalse = constantFalseF f
 
-foldUnaryOp f _ = error "fold: unary op"
+foldUnaryOp f Plus = unaryPlusF f
+foldUnaryOp f Negative = unaryNegativeF f
+foldUnaryOp f Complement = unaryComplementF f
+foldUnaryOp f Logicalneg = unaryLogicalNegF f
 
-foldAssignmentOp f _ = error "fold: assignment op"
+foldAssignmentOp f Assign = opAssignF f
+foldAssignmentOp f AssignMul = opAssignMulF f
+foldAssignmentOp f AssignDiv = opAssignDivF f
+foldAssignmentOp f AssignMod = opAssignModF f
+foldAssignmentOp f AssignAdd = opAssignAddF f
+foldAssignmentOp f AssignSub = opAssignSubF f
 
-foldMain f mai = mainF f mai
+foldMain f (Main inss) = mainF f (map (foldInstanceDecl f) inss)
 
-foldInstanceDecl f _ = error "fold: instance decl"
+foldInstanceDecl f (InstanceDecl tvd vds exps) = instanceDeclF f (foldTypedVarDecl f tvd) (map (foldVarDecl f) vds) (map (foldExp f) exps)
 

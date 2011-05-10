@@ -5,8 +5,12 @@ import qualified Language.Rebeca.Absrebeca as R
 import Language.Rebeca.Fold
 
 refinementAlgebra = RebecaAlgebra {
-    modelF = \envs rcs mai -> Program (Module "test") [Export "none"] [Import "none"] (concat rcs ++ [mai])
+    identF = \id -> id
+
+  , modelF = \envs rcs mai -> Program (Module "test") [Export "none"] [Import "none"] (concat rcs ++ [mai])
+
   , envVarF = \tp -> "env"
+
   , reactiveClassF = \id kr sv msi ms -> [ Function id [PatVar "Env", PatVar "InstanceName"] $
                                                 Receive [ Match (PatT (map PatVar kr)) Nothing $
                                                             Apply id [ ExpVar "Env", ExpVar "InstanceName"
@@ -18,19 +22,37 @@ refinementAlgebra = RebecaAlgebra {
                                            , Function id [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs", PatVar "StateVars"] $
                                                 Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive ms)
                                            ]
-  , knownRebecsF = \tvds -> tvds
-  , stateVarsF = \tvds -> tvds
+  , noKnownRebecsF = []
+  , knownRebecsF = id 
+
+  , noStateVarsF = []
+  , stateVarsF = id
+
   , msgSrvInitF = \tps stms -> Match (PatT $ (PatVal $ AtomicLiteral "initial"):(map PatVar tps)) Nothing (ap $ reverse stms)
+
   , msgSrvF = \id tps stms -> Match (PatT $ (PatVal $ AtomicLiteral id):(map PatVar tps)) Nothing (ap $ reverse stms)
-  , mainF = \_ -> Function "main" [] (ExpVal $ AtomicLiteral "return main")
 
-  , typedVarDeclF = \tvd -> case tvd of
-                                R.TypedVarDecl typeName (R.Ident id) -> id
-                                R.TypedVarDeclAss typeName (R.Ident id) exp -> id -- TODO, return Either String (String, String) ?
-  , typedParameterF = \(R.TypedParameter _ (R.Ident s)) -> s
-  , identF = \id -> id
+  {-, typedVarDeclF = \tvd -> case tvd of-}
+                                {-R.TypedVarDecl typeName (R.Ident id) -> id-}
+                                {-R.TypedVarDeclAss typeName (R.Ident id) exp -> id -- TODO, return Either String (String, String) ?-}
+  {-, typedParameterF = \(R.TypedParameter _ (R.Ident s)) -> s-}
 
-  , assF = \id exp -> stm $ Apply "dict:store" [ExpVal $ AtomicLiteral id, exp, ExpVar "StateVars"]
+  , vDeclAssignF = \id exp -> error "alg: vDeclAssignF"
+  , vDeclF = \id -> error "alg: vDeclF"
+
+  , typedVarDeclF = \tn id -> id
+  , typedVarDeclAssF = \tn id exp -> id
+
+  , typedParameterF = \tn id -> id
+
+  , basicTypeIntF = error "alg: basicTypeIntF"
+  , basicTypeTimeF = error "alg: basicTypeTimeF"
+  , basicTypeBooleanF = error "alg: basicTypeBooleanF"
+
+  , builtInF = \bt -> error "alg: builtInF"
+  , classTypeF = \id -> error "alg: classTypeF"
+
+  , assF = \id aop exp -> stm $ Apply "dict:store" [ExpVal $ AtomicLiteral id, exp, ExpVar "StateVars"]
   , localF = \tvd -> stm $ (ExpVal $ AtomicLiteral "return this")
   , callF = \id0 id exps aft dea -> stm $ case aft of -- TODO lookup id0
                                                 Nothing -> Seq (Apply "tr_send" [ExpVar id0, ExpVal $ AtomicLiteral id, ExpT exps]) retstm
@@ -49,6 +71,11 @@ refinementAlgebra = RebecaAlgebra {
 
   , noDeadlineF = Nothing
   , withDeadlineF = \exp -> Just exp
+
+  , elseifStmF = \exp cs -> error "alg: elseifStmF"
+
+  , emptyElseStmF = error "alg: emptyElseStmF"
+  , elseStmF = \cs -> error "alg: elseStmF"
 
   , lorF = \exp0 exp -> ExpVal $ AtomicLiteral "lor"
   , landF = \exp0 exp -> ExpVal $ AtomicLiteral "land"
@@ -70,16 +97,30 @@ refinementAlgebra = RebecaAlgebra {
   , modF = \exp0 exp -> ExpVal $ AtomicLiteral "mod"
   , expcoercionF = \exp -> ExpVal $ AtomicLiteral "expcoercion"
   , nondetF = \exps -> ExpVal $ AtomicLiteral "nondet"
-  , preopF = \op exp -> Call (case op of
-                                R.Plus -> ExpVal $ AtomicLiteral "+"
-                                R.Negative -> ExpVal $ AtomicLiteral "-"
-                                R.Logicalneg -> ExpVal $ AtomicLiteral "not") exp
+  , preopF = \uop exp -> Call (ExpVal uop) exp
   , nowF = ExpVal $ AtomicLiteral "now"
-  , constF = \con -> ExpVal $ case con of
-                        R.Eint i -> NumberLiteral i
-                        R.Etrue -> AtomicLiteral "true"
-                        R.Efalse -> AtomicLiteral "false"
+  , constF = \con -> ExpVal con
   , varF = \_ -> ExpVal $ AtomicLiteral "var" -- :: R.Exp -> exp
+
+  , constantIntF = \i -> NumberLiteral i
+  , constantTrueF = AtomicLiteral "true"
+  , constantFalseF = AtomicLiteral "false"
+
+  , unaryPlusF = AtomicLiteral "+"
+  , unaryNegativeF = AtomicLiteral "-"
+  , unaryComplementF = error "alg: unaryComplementF"
+  , unaryLogicalNegF = AtomicLiteral "not"
+
+  , opAssignF = error "alg: opAssignF"
+  , opAssignMulF = error "alg: opAssignMulF"
+  , opAssignDivF = error "alg: opAssignDivF"
+  , opAssignModF = error "alg: opAssignModF"
+  , opAssignAddF = error "alg: opAssignAddF"
+  , opAssignSubF = error "alg: opAssignSubF"
+
+  , mainF = \_ -> Function "main" [] (ExpVal $ AtomicLiteral "return main")
+
+  , instanceDeclF = \tvd vds exps -> error "alg: instanceDeclF"
 }
 
 params = ExpT [ExpVar "StateVars", ExpVar "LocalVars"]
