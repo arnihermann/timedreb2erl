@@ -32,11 +32,6 @@ refinementAlgebra = RebecaAlgebra {
 
   , msgSrvF = \id tps stms -> Match (PatT $ (PatVal $ AtomicLiteral id):(map PatVar tps)) Nothing (ap $ reverse stms)
 
-  {-, typedVarDeclF = \tvd -> case tvd of-}
-                                {-R.TypedVarDecl typeName (R.Ident id) -> id-}
-                                {-R.TypedVarDeclAss typeName (R.Ident id) exp -> id -- TODO, return Either String (String, String) ?-}
-  {-, typedParameterF = \(R.TypedParameter _ (R.Ident s)) -> s-}
-
   , vDeclAssignF = \id exp -> error "alg: vDeclAssignF"
   , vDeclF = \id -> error "alg: vDeclF"
 
