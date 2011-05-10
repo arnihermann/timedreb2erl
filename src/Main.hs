@@ -22,6 +22,7 @@ import qualified Language.Rebeca.Fold as F
 import qualified Language.Rebeca.Translation.Erlang.Refinement as R
 import qualified Language.Rebeca.Translation.Erlang.Simplify as Sim
 import qualified Language.Rebeca.Translation.Erlang.Simulation as S
+import qualified Language.Rebeca.Translation.Erlang.Variables as V
 {-import qualified Language.Rebeca.Translation.Erlang.Standard as S-}
 
 fromFile :: FilePath -> IO Model
@@ -99,7 +100,10 @@ main = do
     Params{..} <- cmdArgsRun params
     mod <- fromFile modelFile
     let simplepro = Sim.simplifyAssignment mod
+        statevars = V.stateVarNames simplepro
         pro = S.translateSimulation simplepro
+    putStrLn ("Statevars: " ++ (show statevars))
+    putStrLn "Model:"
     putStrLn $ P.renderProgram pro
 
     {-let Just gen = lookup generator generators-}
