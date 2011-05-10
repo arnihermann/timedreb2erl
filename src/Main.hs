@@ -19,7 +19,8 @@ import qualified Generator.Spirit as Spi
 
 import qualified Language.Erlang.Pretty as P
 import qualified Language.Rebeca.Fold as F
-import qualified Language.Rebeca.Translation.Erlang.Standard as S
+import qualified Language.Rebeca.Translation.Erlang.Refinement as Ref
+{-import qualified Language.Rebeca.Translation.Erlang.Standard as S-}
 
 fromFile :: FilePath -> IO Model
 fromFile f = fromString <$> readFile f
@@ -95,7 +96,7 @@ main :: IO ()
 main = do
     Params{..} <- cmdArgsRun params
     mod <- fromFile modelFile
-    let pro = F.foldModel S.rebecaAlgebra mod
+    let pro = Ref.refine mod
     putStrLn $ P.renderProgram pro
 
     {-let Just gen = lookup generator generators-}
