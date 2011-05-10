@@ -2,7 +2,36 @@ module Language.Rebeca.Fold where
 
 import Language.Rebeca.Absrebeca
 
+{-
+newtype Ident
+data Model
+data EnvVar
+data ReactiveClass
+data KnownRebecs
+data StateVars
+data MsgSrvInit
+data MsgSrv
+data VarDecl
+data TypedVarDecl
+data TypedParameter
+data BasicType
+data TypeName
+data Stm
+data CompStm
+data After
+data Deadline
+data ElseifStm
+data ElseStm
+data Exp
+data Constant
+data UnaryOperator
+data AssignmentOp
+data Main
+data InstanceDecl
+-}
+
 data RebecaAlgebra
+        id  -- result for idents
         mod -- result for model
         env -- result for environment variables
         rc  -- result for reactive classes
@@ -10,19 +39,26 @@ data RebecaAlgebra
         sv  -- result for state vars
         msi -- result for inital message server
         ms  -- result for message servers
-        exp -- result for expressions
+        vd  -- result for var decl
         tvd -- result for typed var decl
         tp  -- result for typed parameter
-        aft -- result for after
-        dea -- result for deadline
+        bt  -- result for basic type
+        tn  -- result for typename
         stm -- result for statements
         cs  -- result for composite statements
-        el  -- result for else 
+        aft -- result for after
+        dea -- result for deadline
         eli -- result for else if statements
-        id  -- result for idents
+        el  -- result for else 
+        exp -- result for expressions
+        con -- result for constant
+        uop  -- result for unary operators
+        aop -- result for assignment op
         mai -- result for main
+        ins -- result for instance decl
     = RebecaAlgebra {
-    modelF :: [env] -> [rc] -> mai -> mod
+    identF :: String -> id        
+  , modelF :: [env] -> [rc] -> mai -> mod
   , envVarF :: tp -> env
   , reactiveClassF :: id -> kr -> sv -> msi -> [ms] -> rc
   , knownRebecsF :: [tvd] -> kr
@@ -33,16 +69,21 @@ data RebecaAlgebra
 
   , typedVarDeclF :: TypedVarDecl -> tvd
   , typedParameterF :: TypedParameter -> tp
-  , identF :: String -> id
 
   , assF :: id -> exp -> stm
   , localF :: tvd -> stm
   , callF :: id -> id -> [exp] -> aft -> dea -> stm
-  , afterF :: Maybe exp -> aft
-  , deadlineF :: Maybe exp -> dea
   , delayF :: exp -> stm
   , selF :: exp -> cs -> [eli] -> el -> stm
-  , compStmF :: [stm] -> cs
+
+  , singleCompStmF :: stm -> cs
+  , multCompStmF :: [stm] -> cs
+
+  , noAfterF :: aft
+  , withAfterF :: exp -> aft
+
+  , noDeadlineF :: dea
+  , withDeadlineF :: exp -> dea
 
   , lorF :: exp -> exp -> exp
   , landF :: exp -> exp -> exp
@@ -70,34 +111,76 @@ data RebecaAlgebra
   , varF :: [id] -> exp
 }
 
-foldModel                   :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> Model              -> mod
-foldEnv                     :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> EnvVar             -> env
-foldReactiveClass           :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> ReactiveClass      -> rc
-foldKnownRebecs             :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> KnownRebecs        -> kr 
-foldStateVars               :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> StateVars          -> sv
-foldMsgSrvInit              :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> MsgSrvInit         -> msi
-foldMsgSrv                  :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> MsgSrv             -> ms
-foldExp                     :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> Exp                -> exp
-foldTypedVarDecl            :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> TypedVarDecl       -> tvd
-foldTypedParameter          :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> TypedParameter     -> tp
-foldAfter                   :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> After              -> aft
-foldDeadline                :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> Deadline           -> dea
-foldStm                     :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> Stm                -> stm
-foldCompStm                 :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> CompStm            -> cs
-foldElseStm                 :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> ElseStm            -> el
-foldElseifStm               :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> ElseifStm          -> eli
-foldIdent                   :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> Ident              -> id
-foldMain                    :: RebecaAlgebra mod env rc kr sv msi ms exp tvd tp aft dea stm cs el eli id mai -> Main               -> mai
+foldIdent           :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> Ident          -> id
+foldModel           :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> Model          -> mod
+foldEnv             :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> EnvVar         -> env
+foldReactiveClass   :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> ReactiveClass  -> rc
+foldKnownRebecs     :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> KnownRebecs    -> kr 
+foldStateVars       :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> StateVars      -> sv
+foldMsgSrvInit      :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> MsgSrvInit     -> msi
+foldMsgSrv          :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> MsgSrv         -> ms
+foldVarDecl         :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> VarDecl        -> vd
+foldTypedVarDecl    :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> TypedVarDecl   -> tvd
+foldTypedParameter  :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> TypedParameter -> tp
+foldBasicType       :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> BasicType      -> bt
+foldTypeName        :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> TypeName       -> tn
+foldStm             :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> Stm            -> stm
+foldCompStm         :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> CompStm        -> cs
+foldAfter           :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> After          -> aft
+foldDeadline        :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> Deadline       -> dea
+foldElseifStm       :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> ElseifStm      -> eli
+foldElseStm         :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> ElseStm        -> el
+foldExp             :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> Exp            -> exp
+foldConstant        :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> Constant       -> con
+foldUnaryOp         :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> UnaryOperator  -> uop
+foldAssignmentOp    :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> AssignmentOp   -> aop
+foldMain            :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> Main           -> mai
+foldInstanceDecl    :: RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins -> InstanceDecl   -> ins
 
+foldIdent f (Ident s) = identF f s
 
 foldModel f (Model vars classes mainbody) = modelF f (map (foldEnv f) vars) (map (foldReactiveClass f) classes) (foldMain f mainbody)
+
 foldEnv f (EnvVar tp) = envVarF f (foldTypedParameter f tp)
+
 foldReactiveClass f (ReactiveClass name _ kr sv msi ms) = reactiveClassF f (foldIdent f name) (foldKnownRebecs f kr) (foldStateVars f sv) (foldMsgSrvInit f msi) (map (foldMsgSrv f) ms)
+
 foldKnownRebecs f (KnownRebecs tvds) = knownRebecsF f (map (foldTypedVarDecl f) tvds)
+
 foldStateVars f (StateVars tvds) = stateVarsF f (map (foldTypedVarDecl f) tvds)
+
 foldMsgSrvInit f (MsgSrvInit tps stms) = msgSrvInitF f (map (foldTypedParameter f) tps) (map (foldStm f) stms)
+
 foldMsgSrv f (MsgSrv id tps stms) = msgSrvF f (foldIdent f id) (map (foldTypedParameter f) tps) (map (foldStm f) stms)
-foldMain f mai = mainF f mai
+
+foldVarDecl f _ = error "fold: var decl"
+
+foldTypedVarDecl f tvd = typedVarDeclF f tvd
+
+foldTypedParameter f tp = typedParameterF f tp
+
+foldBasicType f _ = error "fold: basic type"
+
+foldTypeName f _ = error "fold: type name"
+
+foldStm f (Ass id op exp) = assF f (foldIdent f id) (foldExp f exp)
+foldStm f (Local var) = localF f (foldTypedVarDecl f var)
+foldStm f (Call id0 id exps after deadline) = callF f (foldIdent f id0) (foldIdent f id) (map (foldExp f) exps) (foldAfter f after) (foldDeadline f deadline)
+foldStm f (Delay exp) = delayF f (foldExp f exp)
+foldStm f (Sel exp cs elif el) = selF f (foldExp f exp) (foldCompStm f cs) (map (foldElseifStm f) elif) (foldElseStm f el)
+
+foldCompStm f (SingleCompoundStm stm) = singleCompStmF f (foldStm f stm)
+foldCompStm f (MultCompoundStm stms) = multCompStmF f (map (foldStm f) stms)
+
+foldAfter f (NoAfter) = noAfterF f
+foldAfter f (WithAfter exp) = withAfterF f (foldExp f exp)
+
+foldDeadline f (NoDeadline) = noDeadlineF f
+foldDeadline f (WithDeadline exp) = withDeadlineF f (foldExp f exp)
+
+foldElseifStm f eli = error "fold: elseif"
+
+foldElseStm f el = error "fold: else"
 
 foldExp f (Elor exp0 exp) = lorF f (foldExp f exp0) (foldExp f exp)
 foldExp f (Eland exp0 exp) = landF f (foldExp f exp0) (foldExp f exp)
@@ -124,27 +207,13 @@ foldExp f Enow = nowF f
 foldExp f (Econst constant) = constF f constant
 foldExp f (Evar idents) = varF f (map (foldIdent f) idents)
 
-foldTypedVarDecl f tvd = typedVarDeclF f tvd
-foldTypedParameter f tp = typedParameterF f tp
+foldConstant f _ = error "fold: constant"
 
-foldAfter f aft = afterF f $ case aft of
-    NoAfter -> Nothing
-    WithAfter exp -> Just (foldExp f exp)
-foldDeadline f aft = deadlineF f $ case aft of
-    NoDeadline -> Nothing
-    WithDeadline exp -> Just (foldExp f exp)
+foldUnaryOp f _ = error "fold: unary op"
 
-foldStm f (Ass id op exp) = assF f (foldIdent f id) (foldExp f exp)
-foldStm f (Local var) = localF f (foldTypedVarDecl f var)
-foldStm f (Call id0 id exps after deadline) = callF f (foldIdent f id0) (foldIdent f id) (map (foldExp f) exps) (foldAfter f after) (foldDeadline f deadline)
-foldStm f (Delay exp) = delayF f (foldExp f exp)
-foldStm f (Sel exp cs elif el) = selF f (foldExp f exp) (foldCompStm f cs) (map (foldElseifStm f) elif) (foldElseStm f el)
-foldCompStm f cs = compStmF f $ case cs of
-    SingleCompoundStm stm -> [foldStm f stm]
-    MultCompoundStm stms -> map (foldStm f) stms
+foldAssignmentOp f _ = error "fold: assignment op"
 
-foldElseStm f el = error "fold else"
-foldElseifStm f eli = error "fold elseif"
+foldMain f mai = mainF f mai
 
-foldIdent f (Ident s) = identF f s
+foldInstanceDecl f _ = error "fold: instance decl"
 

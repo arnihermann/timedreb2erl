@@ -35,14 +35,20 @@ refinementAlgebra = RebecaAlgebra {
   , callF = \id0 id exps aft dea -> stm $ case aft of -- TODO lookup id0
                                                 Nothing -> Seq (Apply "tr_send" [ExpVar id0, ExpVal $ AtomicLiteral id, ExpT exps]) retstm
                                                 Just aft' -> Seq (Apply "tr_sendafter" [aft', ExpVar id0, ExpVal $ AtomicLiteral id, ExpT exps]) retstm
-  , afterF = id
-  , deadlineF = id
   , delayF = \exp -> stm $ Seq (Apply "tr_delay" [exp]) retstm
   , selF = \exp cs elseifs els -> stm $ If [Match (PatE exp) Nothing cs]
-  , compStmF = \stms -> case stms of
+
+  , singleCompStmF = \stm -> Call stm params
+  , multCompStmF = \stms -> case stms of
                             [] -> retstm
                             [stm] -> Call stm params
                             _ -> ap $ reverse stms
+
+  , noAfterF = Nothing
+  , withAfterF = \exp -> Just exp
+
+  , noDeadlineF = Nothing
+  , withDeadlineF = \exp -> Just exp
 
   , lorF = \exp0 exp -> ExpVal $ AtomicLiteral "lor"
   , landF = \exp0 exp -> ExpVal $ AtomicLiteral "land"
