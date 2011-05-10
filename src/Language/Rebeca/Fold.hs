@@ -35,7 +35,7 @@ data RebecaAlgebra
 
   , envVarF :: tp -> env
 
-  , reactiveClassF :: id -> kr -> sv -> msi -> [ms] -> rc
+  , reactiveClassF :: id -> Integer -> kr -> sv -> msi -> [ms] -> rc
 
   , noKnownRebecsF :: kr
   , knownRebecsF :: [tvd] -> kr
@@ -160,7 +160,7 @@ foldModel f (Model vars classes mainbody) = modelF f (map (foldEnv f) vars) (map
 
 foldEnv f (EnvVar tp) = envVarF f (foldTypedParameter f tp)
 
-foldReactiveClass f (ReactiveClass name _ kr sv msi ms) = reactiveClassF f (foldIdent f name) (foldKnownRebecs f kr) (foldStateVars f sv) (foldMsgSrvInit f msi) (map (foldMsgSrv f) ms)
+foldReactiveClass f (ReactiveClass name qs kr sv msi ms) = reactiveClassF f (foldIdent f name) qs (foldKnownRebecs f kr) (foldStateVars f sv) (foldMsgSrvInit f msi) (map (foldMsgSrv f) ms)
 
 foldKnownRebecs f NoKnownRebecs = noKnownRebecsF f
 foldKnownRebecs f (KnownRebecs tvds) = knownRebecsF f (map (foldTypedVarDecl f) tvds)

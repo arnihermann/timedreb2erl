@@ -21,6 +21,7 @@ reactiveclass SenderObj(3) {
             receiverObj.send() after(t);
         }
         delay(8);
+        t += 2;
         self.checkAck();
     }
 

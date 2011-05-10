@@ -11,7 +11,7 @@ refinementAlgebra = RebecaAlgebra {
 
   , envVarF = \tp -> "env"
 
-  , reactiveClassF = \id kr sv msi ms -> [ Function id [PatVar "Env", PatVar "InstanceName"] $
+  , reactiveClassF = \id _ kr sv msi ms -> [ Function id [PatVar "Env", PatVar "InstanceName"] $
                                                 Receive [ Match (PatT (map PatVar kr)) Nothing $
                                                             Apply id [ ExpVar "Env", ExpVar "InstanceName"
                                                                      , Apply "dict:from_list" (concat $ map (\k -> [ExpVal $ AtomicLiteral k, ExpVar k]) kr)
@@ -85,7 +85,7 @@ refinementAlgebra = RebecaAlgebra {
   , geF = \exp0 exp -> ExpVal $ AtomicLiteral "ge"
   , leftF = \exp0 exp -> ExpVal $ AtomicLiteral "left"
   , rightF = \exp0 exp -> ExpVal $ AtomicLiteral "right"
-  , plusF = \exp0 exp -> ExpVal $ AtomicLiteral "plus"
+  , plusF = \exp0 exp -> InfixExp OpAdd exp0 exp
   , minusF = \exp0 exp -> ExpVal $ AtomicLiteral "minus"
   , timesF = \exp0 exp -> ExpVal $ AtomicLiteral "times"
   , divF = \exp0 exp -> ExpVal $ AtomicLiteral "div"
@@ -123,5 +123,5 @@ stm = FunAnon [PatT [PatVar "StateVars", PatVar "LocalVars"]]
 ap = foldr Call params
 retstm = ExpT [ExpVar "StateVars", ExpVar "LocalVars"]
 
-refine :: R.Model -> Program
-refine = foldModel refinementAlgebra
+translateRefinment :: R.Model -> Program
+translateRefinment = foldModel refinementAlgebra
