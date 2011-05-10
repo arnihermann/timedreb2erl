@@ -2,34 +2,6 @@ module Language.Rebeca.Fold where
 
 import Language.Rebeca.Absrebeca
 
-{-
-newtype Ident
-data Model
-data EnvVar
-data ReactiveClass
-data KnownRebecs
-data StateVars
-data MsgSrvInit
-data MsgSrv
-data VarDecl
-data TypedVarDecl
-data TypedParameter
-data BasicType
-data TypeName
-data Stm
-data CompStm
-data After
-data Deadline
-data ElseifStm
-data ElseStm
-data Exp
-data Constant
-data UnaryOperator
-data AssignmentOp
-data Main
-data InstanceDecl
--}
-
 data RebecaAlgebra
         id  -- result for idents
         mod -- result for model
