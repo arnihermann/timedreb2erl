@@ -105,4 +105,4 @@ identityAlgebra = RebecaAlgebra {
 
 -- this can be quick-check tested
 translateIdentity :: Model -> Model
-translateIdentity = foldModel identityAlgebra
+translateIdentity = fold identityAlgebra

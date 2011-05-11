@@ -23,5 +23,5 @@ simulationAlgebra = refinementAlgebra {
 }
 
 translateSimulation :: R.Model -> Program
-translateSimulation = foldModel simulationAlgebra
+translateSimulation = fold simulationAlgebra
 

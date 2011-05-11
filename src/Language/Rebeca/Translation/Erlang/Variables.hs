@@ -10,12 +10,12 @@ import Language.Rebeca.Fold
 import Language.Rebeca.Translation.Erlang.Monoid
 
 {-stateVarsAlgebra :: Monoid m => RebecaAlgebra m m m m m m m m m m m m m m m m m m m m m m m m m-}
-stateVarsAlgebra :: Unify [String]
-stateVarsAlgebra = monoidAlgebra {
-    identF = \s -> [s]
-  , stateVarsF = \tvds -> tvds
-}
+{-stateVarsAlgebra :: Unify [String]-}
+{-stateVarsAlgebra = monoidAlgebra {-}
+    {-identF = \s -> [s]-}
+  {-, stateVarsF = \tvds -> tvds-}
+{-}-}
 
-stateVarNames :: Model -> [String]
-stateVarNames = foldModel stateVarsAlgebra
+{-stateVarNames :: Model -> [String]-}
+{-stateVarNames = fold stateVarsAlgebra-}
 

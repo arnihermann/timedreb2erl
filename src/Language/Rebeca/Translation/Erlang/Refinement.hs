@@ -126,4 +126,4 @@ ap = foldr Call params
 retstm = ExpT [ExpVar "StateVars", ExpVar "LocalVars"]
 
 translateRefinment :: R.Model -> Program
-translateRefinment = foldModel refinementAlgebra
+translateRefinment = fold refinementAlgebra

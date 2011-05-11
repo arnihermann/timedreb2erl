@@ -16,5 +16,5 @@ simplifyAssignmentAlgebra = identityAlgebra {
 }
 
 simplifyAssignment :: Model -> Model
-simplifyAssignment = foldModel simplifyAssignmentAlgebra
+simplifyAssignment = fold simplifyAssignmentAlgebra
 
