@@ -23,7 +23,6 @@ import qualified Language.Rebeca.Translation.Erlang.Refinement as R
 import qualified Language.Rebeca.Translation.Erlang.Simplify as Sim
 import qualified Language.Rebeca.Translation.Erlang.Simulation as S
 {-import qualified Language.Rebeca.Translation.Erlang.Variables as V-}
-{-import qualified Language.Rebeca.Translation.Erlang.Standard as S-}
 
 fromFile :: FilePath -> IO Model
 fromFile f = fromString <$> readFile f
