@@ -4,6 +4,8 @@ import Language.Erlang.Syntax
 import qualified Language.Rebeca.Absrebeca as R
 import Language.Rebeca.Fold
 
+
+{-refinementAlgebra :: RebecaAlgebra String Program String [Function] [Name] [Name] Match Match vd Name Name bt tn Exp Exp (Maybe Exp) (Maybe Exp) eli el Exp BasicValue BasicValue aop Function ins-}
 refinementAlgebra = RebecaAlgebra {
     identF = \id -> id
 

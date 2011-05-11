@@ -3,31 +3,31 @@ module Language.Rebeca.Fold where
 import Language.Rebeca.Absrebeca
 
 data RebecaAlgebra
-        id  -- result for idents
-        mod -- result for model
-        env -- result for environment variables
-        rc  -- result for reactive classes
-        kr  -- result for known rebecs
-        sv  -- result for state vars
-        msi -- result for inital message server
-        ms  -- result for message servers
-        vd  -- result for var decl
-        tvd -- result for typed var decl
-        tp  -- result for typed parameter
-        bt  -- result for basic type
-        tn  -- result for typename
-        stm -- result for statements
-        cs  -- result for composite statements
-        aft -- result for after
-        dea -- result for deadline
-        eli -- result for else if statements
-        el  -- result for else 
-        exp -- result for expressions
-        con -- result for constant
-        uop  -- result for unary operators
-        aop -- result for assignment op
-        mai -- result for main
-        ins -- result for instance decl
+        id  -- 1. result for idents
+        mod -- 2. result for model
+        env -- 3. result for environment variables
+        rc  -- 4. result for reactive classes
+        kr  -- 5. result for known rebecs
+        sv  -- 6. result for state vars
+        msi -- 7. result for inital message server
+        ms  -- 8. result for message servers
+        vd  -- 9. result for var decl
+        tvd -- 10. result for typed var decl
+        tp  -- 11. result for typed parameter
+        bt  -- 12. result for basic type
+        tn  -- 13. result for typename
+        stm -- 14. result for statements
+        cs  -- 15. result for composite statements
+        aft -- 16. result for after
+        dea -- 17. result for deadline
+        eli -- 18. result for else if statements
+        el  -- 19. result for else 
+        exp -- 20. result for expressions
+        con -- 21. result for constant
+        uop  -- 22. result for unary operators
+        aop -- 23. result for assignment op
+        mai -- 24. result for main
+        ins -- 25. result for instance decl
     = RebecaAlgebra {
     identF :: String -> id
 
