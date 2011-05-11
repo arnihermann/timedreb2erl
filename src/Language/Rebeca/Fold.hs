@@ -1,4 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances #-}
 
 module Language.Rebeca.Fold where
 
@@ -130,7 +130,7 @@ data RebecaAlgebra
   , instanceDeclF :: tvd -> [vd] -> [exp] -> ins
 }
 
-class Fold f t r where
+class Fold f t r | f t -> r where
     fold :: f -> t -> r
 
 instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) Ident id where
