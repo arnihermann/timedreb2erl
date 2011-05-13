@@ -21,7 +21,7 @@ import qualified Language.Erlang.Pretty as P
 import qualified Language.Rebeca.Fold as F
 import qualified Language.Rebeca.Translation.Erlang.Refinement as R
 import qualified Language.Rebeca.Translation.Erlang.Simplify as Sim
-import qualified Language.Rebeca.Translation.Erlang.Simulation as S
+{-import qualified Language.Rebeca.Translation.Erlang.Simulation as S-}
 {-import qualified Language.Rebeca.Translation.Erlang.Variables as V-}
 
 fromFile :: FilePath -> IO Model
@@ -100,7 +100,7 @@ main = do
     mod <- fromFile modelFile
     let simplepro = Sim.simplifyAssignment mod
         {-statevars = V.stateVarNames simplepro-}
-        pro = S.translateSimulation simplepro
+        pro = R.translateRefinment simplepro
     {-putStrLn ("Statevars: " ++ (show statevars))-}
     putStrLn "Model:"
     putStrLn $ P.renderProgram pro

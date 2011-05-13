@@ -1,9 +1,20 @@
 module Language.Rebeca.Translation.Erlang.Refinement where
 
+import Control.Monad.State
+
 import Language.Erlang.Syntax
 import qualified Language.Rebeca.Absrebeca as R
 import Language.Rebeca.Fold
+import Language.Rebeca.FoldM
 
+type EnvVars = [String]
+type KnownRebecs = [String]
+type StateVars = [String]
+type LocalVars = [String]
+
+type CompilerState = State (EnvVars, KnownRebecs, StateVars, LocalVars)
+
+initialState = ([], [], [], [])
 
 {-refinementAlgebra :: RebecaAlgebra String Program String [Function] [Name] [Name] Match Match vd Name Name bt tn Exp Exp (Maybe Exp) (Maybe Exp) eli el Exp BasicValue BasicValue aop Function ins-}
 refinementAlgebra = RebecaAlgebra {
@@ -30,9 +41,9 @@ refinementAlgebra = RebecaAlgebra {
   , noStateVarsF = []
   , stateVarsF = id
 
-  , msgSrvInitF = \tps stms -> Match (PatT $ (PatVal $ AtomicLiteral "initial"):(map PatVar tps)) Nothing (ap $ reverse stms)
+  , msgSrvInitF = \tps stms -> Match (PatT $ (PatVal $ AtomicLiteral "initial"):(map PatVar tps)) Nothing (apply $ reverse stms)
 
-  , msgSrvF = \id tps stms -> Match (PatT $ (PatVal $ AtomicLiteral id):(map PatVar tps)) Nothing (ap $ reverse stms)
+  , msgSrvF = \id tps stms -> Match (PatT $ (PatVal $ AtomicLiteral id):(map PatVar tps)) Nothing (apply $ reverse stms)
 
   , vDeclAssignF = \id exp -> error "alg: vDeclAssignF"
   , vDeclF = \id -> error "alg: vDeclF"
@@ -61,7 +72,7 @@ refinementAlgebra = RebecaAlgebra {
   , multCompStmF = \stms -> case stms of
                             [] -> retstm
                             [stm] -> Call stm params
-                            _ -> ap $ reverse stms
+                            _ -> apply $ reverse stms
 
   , noAfterF = Nothing
   , withAfterF = \exp -> Just exp
@@ -122,8 +133,12 @@ refinementAlgebra = RebecaAlgebra {
 
 params = ExpT [ExpVar "StateVars", ExpVar "LocalVars"]
 stm = FunAnon [PatT [PatVar "StateVars", PatVar "LocalVars"]]
-ap = foldr Call params
+apply = foldr Call params
 retstm = ExpT [ExpVar "StateVars", ExpVar "LocalVars"]
+
+{-translateRefinment :: R.Model -> CompilerState Program-}
+{-translateRefinment mod = evalState (fold refinementAlgebra mod) initialState -}
 
 translateRefinment :: R.Model -> Program
 translateRefinment = fold refinementAlgebra
+
