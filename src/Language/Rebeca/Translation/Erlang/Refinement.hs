@@ -19,12 +19,14 @@ initialState = ([], [], [], [])
 setEnvVars names = get >>= \(_, kr, sv, lv) -> put (names, kr, sv, lv)
 setKnownRebecs names = get >>= \(env, _, sv, lv) -> put (env, names, sv, lv)
 setStateVars names = get >>= \(env, kr, _, lv) -> put (env, kr, names, lv)
-setLocalVars names = get >>= \(env, kr, sv, _) -> put (env, kr, sv, names)
+{-setLocalVars names = get >>= \(env, kr, sv, _) -> put (env, kr, sv, names)-}
+addLocalVar name = get >>= \(env, kr, sv, lv) -> put (env, kr, sv, name:lv)
 
-{-getEnvVars = get >>= \(env, kr, sv, lv) -> return env-}
-{-getKnownRebecs = State $ \s@(env, kr, sv, lv) -> (kr, s)-}
-{-getStateVars = get >>= \(env, kr, sv, lv) -> return sv-}
-{-getLocalVars = get >>= \(env, kr, sv, lv) -> return lv-}
+
+getEnvVars = State $ \s@(env, kr, sv, lv) -> (env, s)
+getKnownRebecs = State $ \s@(env, kr, sv, lv) -> (kr, s)
+getStateVars = State $ \s@(env, kr, sv, lv) -> (sv, s)
+getLocalVars = State $ \s@(env, kr, sv, lv) -> (lv, s)
 
 {-resetState :: CompilerState ()-}
 {-resetState = State $ \_ -> ((), initialState)-}
@@ -112,10 +114,17 @@ refinementAlgebra = RebecaAlgebra {
         id' <- id
         aop' <- aop
         exp' <- exp
-        return (stm $ Apply "dict:store" [ExpVal $ AtomicLiteral id', exp', ExpVar "StateVars"])
+        sv <- getStateVars
+        lv <- getLocalVars
+        let assignment
+                | id' `elem` sv = ExpT [Apply "dict:store" [ExpVal $ AtomicLiteral id', exp', ExpVar "StateVars"], ExpVar "LocalVars"]
+                | id' `elem` lv = ExpT [ExpVar "StateVars", Apply "dict:store" [ExpVal $ AtomicLiteral id', exp', ExpVar "LocalVars"]]
+                | otherwise = error $ "unknown variable name " ++ id'
+        return (stm assignment)
   , localF = \tvd -> do
-        tvd' <- tvd
-        return (stm $ (ExpVal $ AtomicLiteral "return this"))
+        (d, i) <- tvd
+        addLocalVar i
+        return (stm $ ExpT [ExpVar "StateVars", Apply "dict:store" [ExpVal $ AtomicLiteral i, ExpVal $ AtomicLiteral d, ExpVar "LocalVars"]])
   , callF = \id0 id exps aft dea -> do
         id0' <- id0
         id' <- id
