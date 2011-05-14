@@ -29,24 +29,35 @@ data Monad m => RebecaAlgebraM
         aop -- 23. result for assignment op
         mai -- 24. result for main
         ins -- 25. result for instance decl
+        envl -- 26 rest is for monomorphic lists
+        rcl -- 27
+        msl -- 28
+        tvdl -- 29
+        tpl -- 30
+        stml -- 31
+        expl -- 32
+        elil -- 33
+        idl -- 34
+        insl -- 35
+        vdl -- 36
     = RebecaAlgebraM {
     midentF :: String -> m id
 
-  , mmodelF :: [env] -> [rc] -> mai -> m mod
+  , mmodelF :: envl -> rcl -> mai -> m mod
 
   , menvVarF :: tp -> m env
 
-  , mreactiveClassF :: id -> Integer -> kr -> sv -> msi -> [ms] -> m rc
+  , mreactiveClassF :: id -> Integer -> kr -> sv -> msi -> msl -> m rc
 
   , mnoKnownRebecsF :: m kr
-  , mknownRebecsF :: [tvd] -> m kr
+  , mknownRebecsF :: tvdl -> m kr
 
   , mnoStateVarsF :: m sv
-  , mstateVarsF :: [tvd] -> m sv
+  , mstateVarsF :: tvdl -> m sv
 
-  , mmsgSrvInitF :: [tp] -> [stm] -> m msi
+  , mmsgSrvInitF :: tpl -> stml -> m msi
 
-  , mmsgSrvF :: id -> [tp] -> [stm] -> m ms
+  , mmsgSrvF :: id -> tpl -> stml -> m ms
 
   , mvDeclAssignF :: id -> exp -> m vd
   , mvDeclF :: id -> m vd
@@ -65,12 +76,12 @@ data Monad m => RebecaAlgebraM
 
   , massF :: id -> aop -> exp -> m stm
   , mlocalF :: tvd -> m stm
-  , mcallF :: id -> id -> [exp] -> aft -> dea -> m stm
+  , mcallF :: id -> id -> expl -> aft -> dea -> m stm
   , mdelayF :: exp -> m stm
-  , mselF :: exp -> cs -> [eli] -> el -> m stm
+  , mselF :: exp -> cs -> elil -> el -> m stm
 
   , msingleCompStmF :: stm -> m cs
-  , mmultCompStmF :: [stm] -> m cs
+  , mmultCompStmF :: stml -> m cs
 
   , mnoAfterF :: m aft
   , mwithAfterF :: exp -> m aft
@@ -102,11 +113,11 @@ data Monad m => RebecaAlgebraM
   , mdivF :: exp -> exp -> m exp
   , mmodF :: exp -> exp -> m exp
   , mexpcoercionF :: exp -> m exp
-  , mnondetF :: [exp] -> m exp
+  , mnondetF :: expl -> m exp
   , mpreopF :: uop -> exp -> m exp
   , mnowF :: m exp
   , mconstF :: con -> m exp
-  , mvarF :: [id] -> m exp
+  , mvarF :: idl -> m exp
 
   , mconstantIntF :: Integer -> m con
   , mconstantTrueF :: m con
@@ -124,8 +135,31 @@ data Monad m => RebecaAlgebraM
   , mopAssignAddF :: m aop
   , mopAssignSubF :: m aop
 
-  , mmainF :: [ins] -> m mai
+  , mmainF :: insl -> m mai
 
-  , minstanceDeclF :: tvd -> [vd] -> [exp] -> m ins
+  , minstanceDeclF :: tvd -> vdl -> expl -> m ins
+
+  , nilEnv :: m envl
+  , consEnv :: [env] -> m envl
+  , nilRcl :: m rcl
+  , consRcl :: [rc] -> m rcl
+  , nilMs :: m msl
+  , consMs :: [ms] -> m msl
+  , nilTvd :: m tvdl
+  , consTvd :: [tvd] -> m tvdl
+  , nilTp :: m tpl
+  , consTp :: [tp] -> m tpl
+  , nilStm :: m stml
+  , consStm :: [stm] -> m stml
+  , nilExp :: m expl
+  , consExp :: [exp] -> m expl
+  , nilEli :: m elil
+  , consEli :: [eli] -> m elil
+  , nilId :: m idl
+  , consId :: [id] -> m idl
+  , nilIns :: m insl
+  , consIns :: [ins] -> m insl
+  , nilVd :: m vdl
+  , consVd :: [vd] -> m vdl
 }
 

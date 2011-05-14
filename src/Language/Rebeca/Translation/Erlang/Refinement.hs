@@ -6,7 +6,7 @@ import Language.Erlang.Syntax
 import qualified Language.Rebeca.Absrebeca as R
 import Language.Rebeca.Algebra
 import Language.Rebeca.Fold
-{-import Language.Rebeca.FoldM-}
+import Language.Rebeca.FoldM
 
 type EnvVars = [String]
 type KnownRebecs = [String]
@@ -153,29 +153,6 @@ refinementAlgebra = RebecaAlgebra {
   , consIns = id
   , nilVd = []
   , consVd = id
-
-  {-, nilEnv = []-}
-  {-, consEnv = \(EnvList lst) -> map (fold refinementAlgebra) lst-}
-  {-, nilRcl = []-}
-  {-, consRcl = \(RcList lst) -> map (fold refinementAlgebra) lst -}
-  {-, nilMs = []-}
-  {-, consMs = \(MsList lst) -> map (fold refinementAlgebra) lst-}
-  {-, nilTvd = []-}
-  {-, consTvd = \(TvdList lst) -> map (fold refinementAlgebra) lst-}
-  {-, nilTp = []-}
-  {-, consTp = \(TpList lst) -> map (fold refinementAlgebra) lst-}
-  {-, nilStm = []-}
-  {-, consStm = \(StmList lst) -> map (fold refinementAlgebra) lst-}
-  {-, nilExp = []-}
-  {-, consExp = \(ExpList lst) -> map (fold refinementAlgebra) lst-}
-  {-, nilEli = []-}
-  {-, consEli = \(EliList lst) -> map (fold refinementAlgebra) lst-}
-  {-, nilId = []-}
-  {-, consId = \(IdList lst) -> map (fold refinementAlgebra) lst-}
-  {-, nilIns = []-}
-  {-, consIns = \(InsList lst) -> map (fold refinementAlgebra) lst-}
-  {-, nilVd = []-}
-  {-, consVd = \(VdList lst) -> map (fold refinementAlgebra) lst-}
 }
 
 params = ExpT [ExpVar "StateVars", ExpVar "LocalVars"]
