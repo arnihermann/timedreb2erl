@@ -24,12 +24,12 @@ localVarsAlgebra = monoidAlgebra {
     localF = \tvd -> tvd
 }
 
-stateVarNames :: Model -> [String]
+{-stateVarNames :: Model -> [String]-}
 stateVarNames = fold stateVarsAlgebra
 
-knownRebecNames :: Model -> [String]
+{-knownRebecNames :: Model -> [String]-}
 knownRebecNames = fold knownRebecsAlgebra
 
-localVarNames :: Model -> [String]
+{-localVarNames :: Model -> [String]-}
 localVarNames = fold localVarsAlgebra
 
