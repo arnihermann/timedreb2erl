@@ -1,6 +1,7 @@
 module Language.Rebeca.Translation.Erlang.Identity where
 
 import Language.Rebeca.Absrebeca
+import Language.Rebeca.Algebra
 import Language.Rebeca.Fold
 
 identityAlgebra = RebecaAlgebra {
@@ -101,6 +102,29 @@ identityAlgebra = RebecaAlgebra {
   , mainF = Main
 
   , instanceDeclF = InstanceDecl
+
+  , nilEnv = []
+  , consEnv = unEnvList
+  , nilRcl = []
+  , consRcl = unRcList
+  , nilMs = []
+  , consMs = unMsList
+  , nilTvd = []
+  , consTvd = unTvdList
+  , nilTp = []
+  , consTp = unTpList
+  , nilStm = []
+  , consStm = unStmList
+  , nilExp = []
+  , consExp = unExpList
+  , nilEli = []
+  , consEli = unEliList
+  , nilId = []
+  , consId = unIdList
+  , nilIns = []
+  , consIns = unInsList
+  , nilVd = []
+  , consVd = unVdList
 }
 
 -- this can be quick-check tested

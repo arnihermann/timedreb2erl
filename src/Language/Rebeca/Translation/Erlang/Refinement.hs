@@ -4,8 +4,9 @@ import Control.Monad.State
 
 import Language.Erlang.Syntax
 import qualified Language.Rebeca.Absrebeca as R
+import Language.Rebeca.Algebra
 import Language.Rebeca.Fold
-import Language.Rebeca.FoldM
+{-import Language.Rebeca.FoldM-}
 
 type EnvVars = [String]
 type KnownRebecs = [String]
@@ -129,6 +130,29 @@ refinementAlgebra = RebecaAlgebra {
   , mainF = \_ -> Function "main" [] (ExpVal $ AtomicLiteral "return main")
 
   , instanceDeclF = \tvd vds exps -> error "alg: instanceDeclF"
+
+  , nilEnv = []
+  , consEnv = \envs -> error "envs"
+  , nilRcl = []
+  , consRcl = \(RcList lst) -> map (fold refinementAlgebra) lst 
+  , nilMs = []
+  , consMs = \mss -> error "mss"
+  , nilTvd = []
+  , consTvd = \tvds -> error "tvds"
+  , nilTp = []
+  , consTp = \tps -> error "tps"
+  , nilStm = []
+  , consStm = \stms -> error "stms"
+  , nilExp = []
+  , consExp = \exps -> error "exps"
+  , nilEli = []
+  , consEli = \elis -> error "elis"
+  , nilId = []
+  , consId = \ids -> error "ids"
+  , nilIns = []
+  , consIns = \inss -> error "inss"
+  , nilVd = []
+  , consVd = \vds -> error "vds"
 }
 
 params = ExpT [ExpVar "StateVars", ExpVar "LocalVars"]
@@ -139,6 +163,6 @@ retstm = ExpT [ExpVar "StateVars", ExpVar "LocalVars"]
 {-translateRefinment :: R.Model -> CompilerState Program-}
 {-translateRefinment mod = evalState (fold refinementAlgebra mod) initialState -}
 
-translateRefinment :: R.Model -> Program
-translateRefinment = fold refinementAlgebra
+translateRefinement :: R.Model -> Program
+translateRefinement = fold refinementAlgebra
 

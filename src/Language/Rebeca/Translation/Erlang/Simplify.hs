@@ -1,6 +1,7 @@
 module Language.Rebeca.Translation.Erlang.Simplify where
 
 import Language.Rebeca.Absrebeca
+import Language.Rebeca.Algebra
 import Language.Rebeca.Fold
 
 import Language.Rebeca.Translation.Erlang.Identity

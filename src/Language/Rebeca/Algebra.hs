@@ -1,61 +1,176 @@
 module Language.Rebeca.Algebra where
 
-import qualified Language.Rebeca.Absrebeca as R
+import Language.Rebeca.Absrebeca
 
+newtype EnvList = EnvList { unEnvList :: [EnvVar] }
+newtype RcList = RcList { unRcList :: [ReactiveClass] }
+newtype MsList = MsList { unMsList :: [MsgSrv] }
+newtype TvdList = TvdList { unTvdList :: [TypedVarDecl] }
+newtype TpList = TpList { unTpList :: [TypedParameter] }
+newtype StmList = StmList { unStmList :: [Stm] }
+newtype ExpList = ExpList { unExpList :: [Exp] }
+newtype EliList = EliList { unEliList :: [ElseifStm] }
+newtype IdList = IdList { unIdList :: [Ident] }
+newtype InsList = InsList { unInsList :: [InstanceDecl] }
+newtype VdList = VdList { unVdList :: [VarDecl] }
 
-data ModelAlgebra id tvd tp env kr sv rc msi ms stm mai mod = ModelAlgebra {
-    model :: [env] -> [rc] -> mai -> mod
-  , envVar :: tp -> env
-  , reactiveClass :: id -> kr -> sv -> msi -> [ms] -> rc 
-  , knownRebecs :: [tvd] -> kr
-  , stateVars :: [tvd] -> sv
-  , msgSrvInit :: [tp] -> [stm] -> msi
-  , msgSrv :: id -> [tp] -> [stm] -> ms
-  , main :: R.Main -> mai
-}
+data RebecaAlgebra
+        id  -- 1. result for idents
+        mod -- 2. result for model
+        env -- 3. result for environment variables
+        rc  -- 4. result for reactive classes
+        kr  -- 5. result for known rebecs
+        sv  -- 6. result for state vars
+        msi -- 7. result for inital message server
+        ms  -- 8. result for message servers
+        vd  -- 9. result for var decl
+        tvd -- 10. result for typed var decl
+        tp  -- 11. result for typed parameter
+        bt  -- 12. result for basic type
+        tn  -- 13. result for typename
+        stm -- 14. result for statements
+        cs  -- 15. result for composite statements
+        aft -- 16. result for after
+        dea -- 17. result for deadline
+        eli -- 18. result for else if statements
+        el  -- 19. result for else 
+        exp -- 20. result for expressions
+        con -- 21. result for constant
+        uop  -- 22. result for unary operators
+        aop -- 23. result for assignment op
+        mai -- 24. result for main
+        ins -- 25. result for instance decl
+        envl -- 26 rest is for monomorphic lists
+        rcl -- 27
+        msl -- 28
+        tvdl -- 29
+        tpl -- 30
+        stml -- 31
+        expl -- 32
+        elil -- 33
+        idl -- 34
+        insl -- 35
+        vdl -- 36
+    = RebecaAlgebra {
+    identF :: String -> id
 
+  , modelF :: envl -> rcl -> mai -> mod
 
-data StmAlgebra id exp tvd aft dea cs eli el stm = StmAlgebra {
-    ass :: id -> exp -> stm
-  , local :: tvd -> stm
-  , call :: id -> id -> [exp] -> aft -> dea -> stm
-  , after :: Maybe exp -> aft
-  , deadline :: Maybe exp -> dea
-  , delay :: exp -> stm
-  , sel :: exp -> cs -> [eli] -> el -> stm
-  , compStm :: [stm] -> cs
-}
+  , envVarF :: tp -> env
 
-data ValAlgebra id tvd tp = ValAlgebra {
-    typedVarDecl :: R.TypedVarDecl -> tvd
-  , typedParameter :: R.TypedParameter -> tp
-  , ident :: String -> id
-}
+  , reactiveClassF :: id -> Integer -> kr -> sv -> msi -> msl -> rc
 
-data ExpAlgebra id exp = ExpAlgebra {
-    lor :: exp -> exp -> exp
-  , land :: exp -> exp -> exp
-  , bitor :: exp -> exp -> exp
-  , bitexor :: exp -> exp -> exp
-  , bitand :: exp -> exp -> exp
-  , eq :: exp -> exp -> exp
-  , neq :: exp -> exp -> exp
-  , lthen :: exp -> exp -> exp
-  , grthen :: exp -> exp -> exp
-  , le :: exp -> exp -> exp
-  , ge :: exp -> exp -> exp
-  , left :: exp -> exp -> exp
-  , right :: exp -> exp -> exp
-  , plus :: exp -> exp -> exp
-  , minus :: exp -> exp -> exp
-  , times :: exp -> exp -> exp
-  , div :: exp -> exp -> exp
-  , mod :: exp -> exp -> exp
-  , expcoercion :: exp -> exp
-  , nondet :: [exp] -> exp
-  , preop :: R.UnaryOperator -> exp -> exp
-  , now :: exp
-  , const :: R.Constant -> exp
-  , var :: [id] -> exp
+  , noKnownRebecsF :: kr
+  , knownRebecsF :: tvdl -> kr
+
+  , noStateVarsF :: sv
+  , stateVarsF :: tvdl -> sv
+
+  , msgSrvInitF :: tpl -> stml -> msi
+
+  , msgSrvF :: id -> tpl -> stml -> ms
+
+  , vDeclAssignF :: id -> exp -> vd
+  , vDeclF :: id -> vd
+
+  , typedVarDeclF :: tn -> id -> tvd
+  , typedVarDeclAssF :: tn -> id -> exp -> tvd
+
+  , typedParameterF :: tn -> id -> tp
+
+  , basicTypeIntF :: bt
+  , basicTypeTimeF :: bt
+  , basicTypeBooleanF :: bt
+
+  , builtInF :: bt -> tn
+  , classTypeF :: id -> tn
+
+  , assF :: id -> aop -> exp -> stm
+  , localF :: tvd -> stm
+  , callF :: id -> id -> expl -> aft -> dea -> stm
+  , delayF :: exp -> stm
+  , selF :: exp -> cs -> elil -> el -> stm
+
+  , singleCompStmF :: stm -> cs
+  , multCompStmF :: stml -> cs
+
+  , noAfterF :: aft
+  , withAfterF :: exp -> aft
+
+  , noDeadlineF :: dea
+  , withDeadlineF :: exp -> dea
+
+  , elseifStmF :: exp -> cs -> eli
+
+  , emptyElseStmF :: el
+  , elseStmF :: cs -> el
+
+  , lorF :: exp -> exp -> exp
+  , landF :: exp -> exp -> exp
+  , bitorF :: exp -> exp -> exp
+  , bitexorF :: exp -> exp -> exp
+  , bitandF :: exp -> exp -> exp
+  , eqF :: exp -> exp -> exp
+  , neqF :: exp -> exp -> exp
+  , lthenF :: exp -> exp -> exp
+  , grthenF :: exp -> exp -> exp
+  , leF :: exp -> exp -> exp
+  , geF :: exp -> exp -> exp
+  , leftF :: exp -> exp -> exp
+  , rightF :: exp -> exp -> exp
+  , plusF :: exp -> exp -> exp
+  , minusF :: exp -> exp -> exp
+  , timesF :: exp -> exp -> exp
+  , divF :: exp -> exp -> exp
+  , modF :: exp -> exp -> exp
+  , expcoercionF :: exp -> exp
+  , nondetF :: expl -> exp
+  , preopF :: uop -> exp -> exp
+  , nowF :: exp
+  , constF :: con -> exp
+  , varF :: idl -> exp
+
+  , constantIntF :: Integer -> con
+  , constantTrueF :: con
+  , constantFalseF :: con
+
+  , unaryPlusF :: uop
+  , unaryNegativeF :: uop
+  , unaryComplementF :: uop
+  , unaryLogicalNegF :: uop
+
+  , opAssignF :: aop
+  , opAssignMulF :: aop
+  , opAssignDivF :: aop
+  , opAssignModF :: aop
+  , opAssignAddF :: aop
+  , opAssignSubF :: aop
+
+  , mainF :: insl -> mai
+
+  , instanceDeclF :: tvd -> vdl -> expl -> ins
+
+  , nilEnv :: envl
+  , consEnv :: EnvList -> envl
+  , nilRcl :: rcl
+  , consRcl :: RcList -> rcl
+  , nilMs :: msl
+  , consMs :: MsList -> msl
+  , nilTvd :: tvdl
+  , consTvd :: TvdList -> tvdl
+  , nilTp :: tpl
+  , consTp :: TpList -> tpl
+  , nilStm :: stml
+  , consStm :: StmList -> stml
+  , nilExp :: expl
+  , consExp :: ExpList -> expl
+  , nilEli :: elil
+  , consEli :: EliList -> elil
+  , nilId :: idl
+  , consId :: IdList -> idl
+  , nilIns :: insl
+  , consIns :: InsList -> insl
+  , nilVd :: vdl
+  , consVd :: VdList -> vdl
 }
 
