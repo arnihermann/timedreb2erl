@@ -5,18 +5,19 @@ module Language.Rebeca.Translation.Erlang.Monoid where
 import Data.Monoid
 
 import Language.Rebeca.Absrebeca
+import Language.Rebeca.Algebra
 import Language.Rebeca.Fold
 
-type Unify a = RebecaAlgebra a a a a a a a a a a a a a a a a a a a a a a a a a
+type Unify a = RebecaAlgebra a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a
 
 monoidAlgebra = RebecaAlgebra {
     identF = \s -> [s]
 
-  , modelF = \envs rcs mai -> (mconcat envs) `mappend` (mconcat rcs)
+  , modelF = \envs rcs mai -> envs `mappend` rcs
 
   , envVarF = \_ -> mempty
 
-  , reactiveClassF = \id _ kr sv msi ms -> kr `mappend` sv `mappend` msi `mappend` (mconcat ms)
+  , reactiveClassF = \id _ kr sv msi ms -> kr `mappend` sv `mappend` msi `mappend` ms
 
   , noKnownRebecsF = mempty
   , knownRebecsF = \_ -> mempty
@@ -24,17 +25,17 @@ monoidAlgebra = RebecaAlgebra {
   , noStateVarsF = mempty
   , stateVarsF = \_ -> mempty
 
-  , msgSrvInitF = \tps stms -> (mconcat tps) `mappend` (mconcat stms)
+  , msgSrvInitF = \tps stms -> tps `mappend` stms
 
-  , msgSrvF = \_ tps stms -> (mconcat tps) `mappend` (mconcat stms)
+  , msgSrvF = \_ tps stms -> tps `mappend` stms
 
-  , vDeclAssignF = \id exp -> mempty
-  , vDeclF = \id -> mempty
+  , vDeclAssignF = \id _ -> id
+  , vDeclF = \id -> id
 
-  , typedVarDeclF = \tn id -> id
-  , typedVarDeclAssF = \tn id _ -> id
+  , typedVarDeclF = \_ id -> id
+  , typedVarDeclAssF = \_ id _ -> id
 
-  , typedParameterF = \tn id -> id
+  , typedParameterF = \_ id -> id
 
   , basicTypeIntF = mempty
   , basicTypeTimeF = mempty
@@ -107,6 +108,29 @@ monoidAlgebra = RebecaAlgebra {
   , mainF = \ins -> mempty
 
   , instanceDeclF = \tvd vds exps -> mempty
+
+  , nilEnv = mempty
+  , consEnv = mconcat
+  , nilRcl = mempty
+  , consRcl = mconcat
+  , nilMs = mempty
+  , consMs = mconcat
+  , nilTvd = mempty
+  , consTvd = mconcat
+  , nilTp = mempty
+  , consTp = mconcat
+  , nilStm = mempty
+  , consStm = mconcat
+  , nilExp = mempty
+  , consExp = mconcat
+  , nilEli = mempty
+  , consEli = mconcat
+  , nilId = mempty
+  , consId = mconcat
+  , nilIns = mempty
+  , consIns = mconcat
+  , nilVd = mempty
+  , consVd = mconcat
 }
 
 {-testMonoidAlgebra :: Model -> [String]-}

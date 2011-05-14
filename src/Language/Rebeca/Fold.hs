@@ -12,27 +12,27 @@ instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs a
     fold f (Ident s) = identF f s
 
 instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) Model mod where
-    fold f (Model vars classes mainbody) = modelF f (fold f $ EnvList vars) (fold f $ RcList classes) (fold f mainbody)
+    fold f (Model vars classes mainbody) = modelF f (fold f vars) (fold f classes) (fold f mainbody)
 
 instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) EnvVar env where
     fold f (EnvVar tp) = envVarF f (fold f tp)
 
 instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) ReactiveClass rc where
-    fold f (ReactiveClass name qs kr sv msi ms) = reactiveClassF f (fold f name) qs (fold f kr) (fold f sv) (fold f msi) (fold f $ MsList ms)
+    fold f (ReactiveClass name qs kr sv msi ms) = reactiveClassF f (fold f name) qs (fold f kr) (fold f sv) (fold f msi) (fold f ms)
 
 instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) KnownRebecs kr where
     fold f NoKnownRebecs = noKnownRebecsF f
-    fold f (KnownRebecs tvds) = knownRebecsF f (fold f $ TvdList tvds)
+    fold f (KnownRebecs tvds) = knownRebecsF f (fold f tvds)
 
 instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) StateVars sv where
     fold f NoStateVars = noStateVarsF f
-    fold f (StateVars tvds) = stateVarsF f (fold f $ TvdList tvds)
+    fold f (StateVars tvds) = stateVarsF f (fold f tvds)
 
 instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) MsgSrvInit msi where
-    fold f (MsgSrvInit tps stms) = msgSrvInitF f (fold f $ TpList tps) (fold f $ StmList stms)
+    fold f (MsgSrvInit tps stms) = msgSrvInitF f (fold f tps) (fold f stms)
 
 instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) MsgSrv ms where
-    fold f (MsgSrv id tps stms) = msgSrvF f (fold f id) (fold f $ TpList tps) (fold f $ StmList stms)
+    fold f (MsgSrv id tps stms) = msgSrvF f (fold f id) (fold f tps) (fold f stms)
 
 instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) VarDecl vd where
     fold f (VDeclAssign id exp) = vDeclAssignF f (fold f id) (fold f exp)
@@ -57,13 +57,13 @@ instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs a
 instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) Stm stm where
     fold f (Ass id aop exp) = assF f (fold f id) (fold f aop) (fold f exp)
     fold f (Local var) = localF f (fold f var)
-    fold f (Call id0 id exps after deadline) = callF f (fold f id0) (fold f id) (fold f $ ExpList exps) (fold f after) (fold f deadline)
+    fold f (Call id0 id exps after deadline) = callF f (fold f id0) (fold f id) (fold f exps) (fold f after) (fold f deadline)
     fold f (Delay exp) = delayF f (fold f exp)
-    fold f (Sel exp cs elif el) = selF f (fold f exp) (fold f cs) (fold f $ EliList elif) (fold f el)
+    fold f (Sel exp cs elif el) = selF f (fold f exp) (fold f cs) (fold f elif) (fold f el)
 
 instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) CompStm cs where
     fold f (SingleCompoundStm stm) = singleCompStmF f (fold f stm)
-    fold f (MultCompoundStm stms) = multCompStmF f (fold f $ StmList stms)
+    fold f (MultCompoundStm stms) = multCompStmF f (fold f stms)
 
 instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) After aft where
     fold f (NoAfter) = noAfterF f
@@ -100,11 +100,11 @@ instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs a
     fold f (Ediv exp0 exp) = divF f (fold f exp0) (fold f exp)
     fold f (Emod exp0 exp) = modF f (fold f exp0) (fold f exp)
     fold f (Eexpcoercion exp) = expcoercionF f (fold f exp)
-    fold f (ENondet exps) = nondetF f (fold f $ ExpList exps)
+    fold f (ENondet exps) = nondetF f (fold f exps)
     fold f (Epreop uop exp) = preopF f (fold f uop) (fold f exp)
     fold f Enow = nowF f
     fold f (Econst constant) = constF f (fold f constant)
-    fold f (Evar idents) = varF f (fold f $ IdList idents)
+    fold f (Evar idents) = varF f (fold f idents)
 
 instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) Constant con where
     fold f (Eint i) = constantIntF f i
@@ -126,53 +126,53 @@ instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs a
     fold f AssignSub = opAssignSubF f
 
 instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) Main mai where
-    fold f (Main inss) = mainF f (fold f $ InsList inss)
+    fold f (Main inss) = mainF f (fold f inss)
 
 instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) InstanceDecl ins where
-    fold f (InstanceDecl tvd vds exps) = instanceDeclF f (fold f tvd) (fold f $ VdList vds) (fold f $ ExpList exps)
+    fold f (InstanceDecl tvd vds exps) = instanceDeclF f (fold f tvd) (fold f vds) (fold f exps)
 
-instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) EnvList envl where
-    fold f (EnvList []) = nilEnv f
-    fold f lst@(EnvList _) = consEnv f lst
+instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [EnvVar] envl where
+    fold f [] = nilEnv f
+    fold f lst = consEnv f (map (fold f) lst)
 
-instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) RcList rcl where
-    fold f (RcList []) = nilRcl f
-    fold f lst@(RcList _) = consRcl f lst
+instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [ReactiveClass] rcl where
+    fold f [] = nilRcl f
+    fold f lst = consRcl f (map (fold f) lst)
 
-instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) MsList msl where
-    fold f (MsList []) = nilMs f
-    fold f lst@(MsList _) = consMs f lst
+instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [MsgSrv] msl where
+    fold f [] = nilMs f
+    fold f lst = consMs f (map (fold f) lst)
 
-instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) TvdList tvdl where
-    fold f (TvdList []) = nilTvd f
-    fold f lst@(TvdList _) = consTvd f lst
+instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [TypedVarDecl] tvdl where
+    fold f [] = nilTvd f
+    fold f lst = consTvd f (map (fold f) lst)
 
-instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) TpList tpl where
-    fold f (TpList []) = nilTp f
-    fold f lst@(TpList _) = consTp f lst
+instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [TypedParameter] tpl where
+    fold f [] = nilTp f
+    fold f lst = consTp f (map (fold f) lst)
 
-instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) StmList stml where
-    fold f (StmList []) = nilStm f
-    fold f lst@(StmList _) = consStm f lst
+instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [Stm] stml where
+    fold f [] = nilStm f
+    fold f lst = consStm f (map (fold f) lst)
 
-instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) ExpList expl where
-    fold f (ExpList []) = nilExp f
-    fold f lst@(ExpList _) = consExp f lst
+instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [Exp] expl where
+    fold f [] = nilExp f
+    fold f lst = consExp f (map (fold f) lst)
 
-instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) EliList elil where
-    fold f (EliList []) = nilEli f
-    fold f lst@(EliList _) = consEli f lst
+instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [ElseifStm] elil where
+    fold f [] = nilEli f
+    fold f lst = consEli f (map (fold f) lst)
 
-instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) IdList idl where
-    fold f (IdList []) = nilId f
-    fold f lst@(IdList _) = consId f lst
+instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [Ident] idl where
+    fold f [] = nilId f
+    fold f lst = consId f (map (fold f) lst)
 
-instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) InsList insl where
-    fold f (InsList []) = nilIns f
-    fold f lst@(InsList _) = consIns f lst
+instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [InstanceDecl] insl where
+    fold f [] = nilIns f
+    fold f lst = consIns f (map (fold f) lst)
 
-instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) VdList vdl where
-    fold f (VdList []) = nilVd f
-    fold f lst@(VdList _) = consVd f lst
+instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [VarDecl] vdl where
+    fold f [] = nilVd f
+    fold f lst = consVd f (map (fold f) lst)
 
 

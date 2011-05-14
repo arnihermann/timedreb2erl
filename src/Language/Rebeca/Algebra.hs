@@ -2,17 +2,17 @@ module Language.Rebeca.Algebra where
 
 import Language.Rebeca.Absrebeca
 
-newtype EnvList = EnvList { unEnvList :: [EnvVar] }
-newtype RcList = RcList { unRcList :: [ReactiveClass] }
-newtype MsList = MsList { unMsList :: [MsgSrv] }
-newtype TvdList = TvdList { unTvdList :: [TypedVarDecl] }
-newtype TpList = TpList { unTpList :: [TypedParameter] }
-newtype StmList = StmList { unStmList :: [Stm] }
-newtype ExpList = ExpList { unExpList :: [Exp] }
-newtype EliList = EliList { unEliList :: [ElseifStm] }
-newtype IdList = IdList { unIdList :: [Ident] }
-newtype InsList = InsList { unInsList :: [InstanceDecl] }
-newtype VdList = VdList { unVdList :: [VarDecl] }
+{-newtype EnvList = EnvList { unEnvList :: [EnvVar] }-}
+{-newtype RcList = RcList { unRcList :: [ReactiveClass] }-}
+{-newtype MsList = MsList { unMsList :: [MsgSrv] }-}
+{-newtype TvdList = TvdList { unTvdList :: [TypedVarDecl] }-}
+{-newtype TpList = TpList { unTpList :: [TypedParameter] }-}
+{-newtype StmList = StmList { unStmList :: [Stm] }-}
+{-newtype ExpList = ExpList { unExpList :: [Exp] }-}
+{-newtype EliList = EliList { unEliList :: [ElseifStm] }-}
+{-newtype IdList = IdList { unIdList :: [Ident] }-}
+{-newtype InsList = InsList { unInsList :: [InstanceDecl] }-}
+{-newtype VdList = VdList { unVdList :: [VarDecl] }-}
 
 data RebecaAlgebra
         id  -- 1. result for idents
@@ -151,26 +151,26 @@ data RebecaAlgebra
   , instanceDeclF :: tvd -> vdl -> expl -> ins
 
   , nilEnv :: envl
-  , consEnv :: EnvList -> envl
+  , consEnv :: [env] -> envl
   , nilRcl :: rcl
-  , consRcl :: RcList -> rcl
+  , consRcl :: [rc] -> rcl
   , nilMs :: msl
-  , consMs :: MsList -> msl
+  , consMs :: [ms] -> msl
   , nilTvd :: tvdl
-  , consTvd :: TvdList -> tvdl
+  , consTvd :: [tvd] -> tvdl
   , nilTp :: tpl
-  , consTp :: TpList -> tpl
+  , consTp :: [tp] -> tpl
   , nilStm :: stml
-  , consStm :: StmList -> stml
+  , consStm :: [stm] -> stml
   , nilExp :: expl
-  , consExp :: ExpList -> expl
+  , consExp :: [exp] -> expl
   , nilEli :: elil
-  , consEli :: EliList -> elil
+  , consEli :: [eli] -> elil
   , nilId :: idl
-  , consId :: IdList -> idl
+  , consId :: [id] -> idl
   , nilIns :: insl
-  , consIns :: InsList -> insl
+  , consIns :: [ins] -> insl
   , nilVd :: vdl
-  , consVd :: VdList -> vdl
+  , consVd :: [vd] -> vdl
 }
 
