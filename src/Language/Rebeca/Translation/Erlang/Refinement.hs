@@ -26,8 +26,8 @@ setLocalVars names = get >>= \(env, kr, sv, _) -> put (env, kr, sv, names)
 {-getStateVars = get >>= \(env, kr, sv, lv) -> return sv-}
 {-getLocalVars = get >>= \(env, kr, sv, lv) -> return lv-}
 
-resetState :: CompilerState ()
-resetState = State $ \_ -> ((), initialState)
+{-resetState :: CompilerState ()-}
+{-resetState = State $ \_ -> ((), initialState)-}
 
 defaultVal "int" = "0"
 defaultVal "time" = "0"
@@ -37,44 +37,67 @@ defaultVal s = error ("no default value for " ++ s)
 refinementAlgebra = RebecaAlgebra {
     identF = \id -> return id
 
-  , modelF = \envs rcs mai -> sequence envs >>= \envs' -> sequence rcs >>= \rcs' -> mai >>= \mai' -> return (Program (Module "test") [Export "none"] [Import "none"] (concat rcs' ++ [mai']))
+  , modelF = \envs rcs mai -> do
+        envs' <- sequence envs
+        rcs' <- sequence rcs
+        mai' <- mai
+        return (Program (Module "test") [Export "none"] [Import "none"] (concat rcs' ++ [mai']))
 
   , envVarF = \tp -> tp
 
-  , reactiveClassF = \id _ kr sv msi ms -> id >>= \id' ->
-                                           kr >>= \kr' ->
-                                           sv >>= \sv' ->
-                                           msi >>= \msi' ->
-                                           sequence ms >>= \ms' ->
-                                               return ([ Function id' [PatVar "Env", PatVar "InstanceName"] $
-                                                    Receive [ Match (PatT (map PatVar kr')) Nothing $
-                                                                Apply id' [ ExpVar "Env", ExpVar "InstanceName"
-                                                                         , Apply "dict:from_list" [ExpL (concat $ map (\k -> [ExpVal $ AtomicLiteral k, ExpVar k]) kr')]
-                                                                         ]
-                                                            ]
-                                               , Function id' [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs"] $
-                                                    Seq (Assign (PatVar "StateVars") (Apply "dict:from_list" [ExpL (concat $ map (\(d, i) -> [ExpVal $ AtomicLiteral i, ExpVal $ AtomicLiteral d]) sv')]))
-                                                        (Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive [msi']))
-                                               , Function id' [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs", PatVar "StateVars"] $
-                                                    Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive ms')
-                                               ])
+  , reactiveClassF = \id _ kr sv msi ms -> do
+        id' <- id
+        kr' <- kr
+        sv' <- sv
+        msi' <- msi
+        ms' <- sequence ms
+        return ([ Function id' [PatVar "Env", PatVar "InstanceName"] $
+            Receive [ Match (PatT (map PatVar kr')) Nothing $
+                        Apply id' [ ExpVar "Env", ExpVar "InstanceName"
+                                 , Apply "dict:from_list" [ExpL (concat $ map (\k -> [ExpVal $ AtomicLiteral k, ExpVar k]) kr')]
+                                 ]
+                    ]
+            , Function id' [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs"] $
+                Seq (Assign (PatVar "StateVars") (Apply "dict:from_list" [ExpL (concat $ map (\(d, i) -> [ExpVal $ AtomicLiteral i, ExpVal $ AtomicLiteral d]) sv')]))
+                    (Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive [msi']))
+            , Function id' [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs", PatVar "StateVars"] $
+                Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive ms')
+            ])
   , noKnownRebecsF = return []
-  , knownRebecsF = \tvds -> sequence tvds >>= \tvds' -> setKnownRebecs (map snd tvds') >> return (map snd tvds')
+  , knownRebecsF = \tvds -> do
+        tvds' <- sequence tvds
+        setKnownRebecs (map snd tvds')
+        return (map snd tvds')
 
   , noStateVarsF = return []
-  , stateVarsF = \tvds -> sequence tvds >>= \tvds' -> setStateVars (map snd tvds') >> return tvds'
+  , stateVarsF = \tvds -> do
+        tvds' <- sequence tvds
+        setStateVars (map snd tvds')
+        return tvds'
 
-  , msgSrvInitF = \tps stms -> sequence tps >>= \tps' -> sequence stms >>= \stms' ->
-                               let patterns = (PatT $ (PatVal $ AtomicLiteral "initial"):(map PatVar tps'))
-                               in return (Match patterns Nothing (apply $ reverse stms'))
+  , msgSrvInitF = \tps stms -> do
+        tps' <- sequence tps
+        stms' <- sequence stms
+        let patterns = (PatT $ (PatVal $ AtomicLiteral "initial"):(map PatVar tps'))
+        return (Match patterns Nothing (apply $ reverse stms'))
 
-  , msgSrvF = \id tps stms -> id >>= \id' -> sequence tps >>= \tps' -> sequence stms >>= \stms' -> return (Match (PatT $ (PatVal $ AtomicLiteral id'):(map PatVar tps')) Nothing (apply $ reverse stms'))
+  , msgSrvF = \id tps stms -> do
+        id' <- id
+        tps' <- sequence tps
+        stms' <- sequence stms
+        return (Match (PatT $ (PatVal $ AtomicLiteral id'):(map PatVar tps')) Nothing (apply $ reverse stms'))
 
   , vDeclAssignF = \id _ -> id
   , vDeclF = \id -> id
 
-  , typedVarDeclF = \tn id -> tn >>= \tn' -> id >>= \id' -> return (defaultVal tn', id')
-  , typedVarDeclAssF = \tn id _ -> tn >>= \tn' -> id >>= \id' -> return (defaultVal tn', id')
+  , typedVarDeclF = \tn id -> do
+        tn' <- tn
+        id' <- id
+        return (defaultVal tn', id')
+  , typedVarDeclAssF = \tn id _ -> do
+        tn' <- tn
+        id' <- id
+        return (defaultVal tn', id')
 
   , typedParameterF = \_ id -> id
 
@@ -85,25 +108,37 @@ refinementAlgebra = RebecaAlgebra {
   , builtInF = \bt -> bt
   , classTypeF = \id -> id
 
-  , assF = \id aop exp -> id >>= \id' -> aop >>= \aop' -> exp >>= \exp' -> return (stm $ Apply "dict:store" [ExpVal $ AtomicLiteral id', exp', ExpVar "StateVars"])
-  , localF = \tvd -> tvd >>= \tvd' -> return (stm $ (ExpVal $ AtomicLiteral "return this"))
-  , callF = \id0 id exps aft dea -> id0 >>= \id0' ->
-                                    id >>= \id' ->
-                                    sequence exps >>= \exps' ->
-                                    aft >>= \aft' ->
-                                    dea >>= \dea' ->
-                                    return $ stm $ case aft' of -- TODO lookup id0
-                                                Nothing -> Seq (Apply "tr_send" [ExpVar id0', ExpVal $ AtomicLiteral id', ExpT exps']) retstm
-                                                Just aft'' -> Seq (Apply "tr_sendafter" [aft'', ExpVar id0', ExpVal $ AtomicLiteral id', ExpT exps']) retstm
+  , assF = \id aop exp -> do
+        id' <- id
+        aop' <- aop
+        exp' <- exp
+        return (stm $ Apply "dict:store" [ExpVal $ AtomicLiteral id', exp', ExpVar "StateVars"])
+  , localF = \tvd -> do
+        tvd' <- tvd
+        return (stm $ (ExpVal $ AtomicLiteral "return this"))
+  , callF = \id0 id exps aft dea -> do
+        id0' <- id0
+        id' <- id
+        exps' <- sequence exps
+        aft' <- aft
+        dea' <- dea
+        return $ stm $ case aft' of -- TODO lookup id0
+                    Nothing -> Seq (Apply "tr_send" [ExpVar id0', ExpVal $ AtomicLiteral id', ExpT exps']) retstm
+                    Just aft'' -> Seq (Apply "tr_sendafter" [aft'', ExpVar id0', ExpVal $ AtomicLiteral id', ExpT exps']) retstm
   , delayF = \exp -> exp >>= \exp' -> return (stm $ Seq (Apply "tr_delay" [exp']) retstm)
-  , selF = \exp cs elseifs els -> exp >>= \exp' -> cs >>= \cs' -> sequence elseifs >>= \elseifs' -> els >>= \els' -> return (stm $ If [Match (PatE exp') Nothing cs'])
+  , selF = \exp cs elseifs els -> do
+        exp' <- exp
+        cs' <- cs
+        elseifs' <- sequence elseifs
+        els' <- els
+        return (stm $ If [Match (PatE exp') Nothing cs'])
 
   , singleCompStmF = \stm -> stm >>= \stm' -> return (Call stm' params)
   , multCompStmF = \stms -> sequence stms >>= \stms' ->
-                        return $ case stms' of
-                            [] -> retstm
-                            [stm] -> Call stm params
-                            _ -> apply $ reverse stms'
+        return $ case stms' of
+            [] -> retstm
+            [stm] -> Call stm params
+            _ -> apply $ reverse stms'
 
   , noAfterF = return Nothing
   , withAfterF = \exp -> exp >>= \exp' -> return (Just exp')
@@ -111,7 +146,10 @@ refinementAlgebra = RebecaAlgebra {
   , noDeadlineF = return Nothing
   , withDeadlineF = \exp -> exp >>= \exp' -> return (Just exp')
 
-  , elseifStmF = \exp cs -> exp >>= \exp' -> cs >>= \cs' -> return (Match (PatVal $ AtomicLiteral "true") Nothing retstm)
+  , elseifStmF = \exp cs -> do
+        exp' <- exp
+        cs' <- cs
+        return (Match (PatVal $ AtomicLiteral "true") Nothing retstm)
 
   , emptyElseStmF = return (Match (PatVal $ AtomicLiteral "true") Nothing retstm)
   , elseStmF = \cs -> cs >>= \cs' -> return (Match (PatVal $ AtomicLiteral "true") Nothing retstm)
@@ -159,7 +197,11 @@ refinementAlgebra = RebecaAlgebra {
 
   , mainF = \ins -> sequence ins >>= \ins' -> return (Function "main" [] (ExpVal $ AtomicLiteral "return main"))
 
-  , instanceDeclF = \tvd vds exps -> tvd >>= \tvd' -> sequence vds >>= \vds' -> sequence exps >>= \exps' -> return (ExpVal $ AtomicLiteral "return instancedecl")
+  , instanceDeclF = \tvd vds exps -> do
+        tvd' <- tvd
+        vds' <- sequence vds
+        exps' <- sequence exps
+        return (ExpVal $ AtomicLiteral "return instancedecl")
 }
 
 params = ExpT [ExpVar "StateVars", ExpVar "LocalVars"]
