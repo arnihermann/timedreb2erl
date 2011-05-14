@@ -139,27 +139,27 @@ data Monad m => RebecaAlgebraM
 
   , minstanceDeclF :: tvd -> vdl -> expl -> m ins
 
-  , nilEnv :: m envl
-  , consEnv :: [env] -> m envl
-  , nilRcl :: m rcl
-  , consRcl :: [rc] -> m rcl
-  , nilMs :: m msl
-  , consMs :: [ms] -> m msl
-  , nilTvd :: m tvdl
-  , consTvd :: [tvd] -> m tvdl
-  , nilTp :: m tpl
-  , consTp :: [tp] -> m tpl
-  , nilStm :: m stml
-  , consStm :: [stm] -> m stml
-  , nilExp :: m expl
-  , consExp :: [exp] -> m expl
-  , nilEli :: m elil
-  , consEli :: [eli] -> m elil
-  , nilId :: m idl
-  , consId :: [id] -> m idl
-  , nilIns :: m insl
-  , consIns :: [ins] -> m insl
-  , nilVd :: m vdl
-  , consVd :: [vd] -> m vdl
+  , mnilEnv :: m envl
+  , mconsEnv :: [env] -> m envl
+  , mnilRcl :: m rcl
+  , mconsRcl :: [rc] -> m rcl
+  , mnilMs :: m msl
+  , mconsMs :: [ms] -> m msl
+  , mnilTvd :: m tvdl
+  , mconsTvd :: [tvd] -> m tvdl
+  , mnilTp :: m tpl
+  , mconsTp :: [tp] -> m tpl
+  , mnilStm :: m stml
+  , mconsStm :: [stm] -> m stml
+  , mnilExp :: m expl
+  , mconsExp :: [exp] -> m expl
+  , mnilEli :: m elil
+  , mconsEli :: [eli] -> m elil
+  , mnilId :: m idl
+  , mconsId :: [id] -> m idl
+  , mnilIns :: m insl
+  , mconsIns :: [ins] -> m insl
+  , mnilVd :: m vdl
+  , mconsVd :: [vd] -> m vdl
 }
 
