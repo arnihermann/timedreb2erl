@@ -1,6 +1,7 @@
 module Language.Rebeca.AlgebraM where
 
 import Language.Rebeca.Absrebeca
+import Language.Rebeca.Algebra
 
 data Monad m => RebecaAlgebraM
         m
