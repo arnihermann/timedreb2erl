@@ -1,6 +1,7 @@
 module Language.Rebeca.Translation.Erlang.Refinement where
 
 import Control.Monad.State
+import Data.Maybe (fromMaybe)
 
 import Language.Erlang.Syntax
 import qualified Language.Rebeca.Absrebeca as R
@@ -131,9 +132,15 @@ refinementAlgebra = RebecaAlgebra {
         exps' <- sequence exps
         aft' <- aft
         dea' <- dea
+        kr <- getKnownRebecs
+        let target
+                | id0' == "self" = ExpVal $ AtomicLiteral "self()"
+                | id0' `elem` kr = Apply "dict:fetch" [ExpVal $ AtomicLiteral id0', ExpVar "KnownRebecs"]
+                | otherwise = ExpVar id0' -- TODO: this is unsafe, we need to store formal parameters of the method in state as well, and check
+        let deadline = fromMaybe (ExpVal $ AtomicLiteral "inf") dea'
         return $ stm $ case aft' of -- TODO lookup id0
-                    Nothing -> Seq (Apply "tr_send" [ExpVar id0', ExpVal $ AtomicLiteral id', ExpT exps']) retstm
-                    Just aft'' -> Seq (Apply "tr_sendafter" [aft'', ExpVar id0', ExpVal $ AtomicLiteral id', ExpT exps']) retstm
+                    Nothing -> Seq (Apply "tr_send" [target, ExpVal $ AtomicLiteral id', ExpT exps', deadline]) retstm
+                    Just aft'' -> Seq (Apply "tr_sendafter" [aft'', target, ExpVal $ AtomicLiteral id', ExpT exps', deadline]) retstm
   , delayF = \exp -> exp >>= \exp' -> return (stm $ Seq (Apply "tr_delay" [exp']) retstm)
   , selF = \exp cs elseifs els -> do
         exp' <- exp
