@@ -6,7 +6,6 @@ import Language.Erlang.Syntax
 import qualified Language.Rebeca.Absrebeca as R
 import Language.Rebeca.Algebra
 import Language.Rebeca.Fold
-{-import Language.Rebeca.FoldM-}
 
 type EnvVars = [String]
 type KnownRebecs = [String]
@@ -23,12 +22,17 @@ setStateVars names = get >>= \(env, kr, _, lv) -> put (env, kr, names, lv)
 setLocalVars names = get >>= \(env, kr, sv, _) -> put (env, kr, sv, names)
 
 {-getEnvVars = get >>= \(env, kr, sv, lv) -> return env-}
-{-getKnownRebecs = get >>= \(env, kr, sv, lv) -> return kr-}
+{-getKnownRebecs = State $ \s@(env, kr, sv, lv) -> (kr, s)-}
 {-getStateVars = get >>= \(env, kr, sv, lv) -> return sv-}
 {-getLocalVars = get >>= \(env, kr, sv, lv) -> return lv-}
 
 resetState :: CompilerState ()
 resetState = State $ \_ -> ((), initialState)
+
+defaultVal "int" = "0"
+defaultVal "time" = "0"
+defaultVal "boolean" = "false"
+defaultVal s = error ("no default value for " ++ s)
 
 refinementAlgebra = RebecaAlgebra {
     identF = \id -> return id
@@ -42,23 +46,23 @@ refinementAlgebra = RebecaAlgebra {
                                            sv >>= \sv' ->
                                            msi >>= \msi' ->
                                            sequence ms >>= \ms' ->
-                                               resetState >> return ([ Function id' [PatVar "Env", PatVar "InstanceName"] $
+                                               return ([ Function id' [PatVar "Env", PatVar "InstanceName"] $
                                                     Receive [ Match (PatT (map PatVar kr')) Nothing $
                                                                 Apply id' [ ExpVar "Env", ExpVar "InstanceName"
                                                                          , Apply "dict:from_list" [ExpL (concat $ map (\k -> [ExpVal $ AtomicLiteral k, ExpVar k]) kr')]
                                                                          ]
                                                             ]
                                                , Function id' [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs"] $
-                                                    Seq (Assign (PatVar "StateVars") (Apply "dict:from_list" [ExpL (concat $ map (\s -> [ExpVal $ AtomicLiteral s, ExpVal $ AtomicLiteral "default"]) sv')]))
+                                                    Seq (Assign (PatVar "StateVars") (Apply "dict:from_list" [ExpL (concat $ map (\(d, i) -> [ExpVal $ AtomicLiteral i, ExpVal $ AtomicLiteral d]) sv')]))
                                                         (Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive [msi']))
                                                , Function id' [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs", PatVar "StateVars"] $
                                                     Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive ms')
                                                ])
   , noKnownRebecsF = return []
-  , knownRebecsF = \tvds -> sequence tvds >>= \tvds' -> setKnownRebecs tvds' >> return tvds'
+  , knownRebecsF = \tvds -> sequence tvds >>= \tvds' -> setKnownRebecs (map snd tvds') >> return (map snd tvds')
 
   , noStateVarsF = return []
-  , stateVarsF = \tvds -> sequence tvds >>= \tvds' -> setStateVars tvds' >> return tvds'
+  , stateVarsF = \tvds -> sequence tvds >>= \tvds' -> setStateVars (map snd tvds') >> return tvds'
 
   , msgSrvInitF = \tps stms -> sequence tps >>= \tps' -> sequence stms >>= \stms' ->
                                let patterns = (PatT $ (PatVal $ AtomicLiteral "initial"):(map PatVar tps'))
@@ -69,8 +73,8 @@ refinementAlgebra = RebecaAlgebra {
   , vDeclAssignF = \id _ -> id
   , vDeclF = \id -> id
 
-  , typedVarDeclF = \_ id -> id
-  , typedVarDeclAssF = \_ id _ -> id
+  , typedVarDeclF = \tn id -> tn >>= \tn' -> id >>= \id' -> return (defaultVal tn', id')
+  , typedVarDeclAssF = \tn id _ -> tn >>= \tn' -> id >>= \id' -> return (defaultVal tn', id')
 
   , typedParameterF = \_ id -> id
 
