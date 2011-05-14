@@ -2,18 +2,6 @@ module Language.Rebeca.Algebra where
 
 import Language.Rebeca.Absrebeca
 
-{-newtype EnvList = EnvList { unEnvList :: [EnvVar] }-}
-{-newtype RcList = RcList { unRcList :: [ReactiveClass] }-}
-{-newtype MsList = MsList { unMsList :: [MsgSrv] }-}
-{-newtype TvdList = TvdList { unTvdList :: [TypedVarDecl] }-}
-{-newtype TpList = TpList { unTpList :: [TypedParameter] }-}
-{-newtype StmList = StmList { unStmList :: [Stm] }-}
-{-newtype ExpList = ExpList { unExpList :: [Exp] }-}
-{-newtype EliList = EliList { unEliList :: [ElseifStm] }-}
-{-newtype IdList = IdList { unIdList :: [Ident] }-}
-{-newtype InsList = InsList { unInsList :: [InstanceDecl] }-}
-{-newtype VdList = VdList { unVdList :: [VarDecl] }-}
-
 data RebecaAlgebra
         id  -- 1. result for idents
         mod -- 2. result for model
@@ -40,35 +28,24 @@ data RebecaAlgebra
         aop -- 23. result for assignment op
         mai -- 24. result for main
         ins -- 25. result for instance decl
-        envl -- 26 rest is for monomorphic lists
-        rcl -- 27
-        msl -- 28
-        tvdl -- 29
-        tpl -- 30
-        stml -- 31
-        expl -- 32
-        elil -- 33
-        idl -- 34
-        insl -- 35
-        vdl -- 36
     = RebecaAlgebra {
     identF :: String -> id
 
-  , modelF :: envl -> rcl -> mai -> mod
+  , modelF :: [env] -> [rc] -> mai -> mod
 
   , envVarF :: tp -> env
 
-  , reactiveClassF :: id -> Integer -> kr -> sv -> msi -> msl -> rc
+  , reactiveClassF :: id -> Integer -> kr -> sv -> msi -> [ms] -> rc
 
   , noKnownRebecsF :: kr
-  , knownRebecsF :: tvdl -> kr
+  , knownRebecsF :: [tvd] -> kr
 
   , noStateVarsF :: sv
-  , stateVarsF :: tvdl -> sv
+  , stateVarsF :: [tvd] -> sv
 
-  , msgSrvInitF :: tpl -> stml -> msi
+  , msgSrvInitF :: [tp] -> [stm] -> msi
 
-  , msgSrvF :: id -> tpl -> stml -> ms
+  , msgSrvF :: id -> [tp] -> [stm] -> ms
 
   , vDeclAssignF :: id -> exp -> vd
   , vDeclF :: id -> vd
@@ -87,12 +64,12 @@ data RebecaAlgebra
 
   , assF :: id -> aop -> exp -> stm
   , localF :: tvd -> stm
-  , callF :: id -> id -> expl -> aft -> dea -> stm
+  , callF :: id -> id -> [exp] -> aft -> dea -> stm
   , delayF :: exp -> stm
-  , selF :: exp -> cs -> elil -> el -> stm
+  , selF :: exp -> cs -> [eli] -> el -> stm
 
   , singleCompStmF :: stm -> cs
-  , multCompStmF :: stml -> cs
+  , multCompStmF :: [stm] -> cs
 
   , noAfterF :: aft
   , withAfterF :: exp -> aft
@@ -124,11 +101,11 @@ data RebecaAlgebra
   , divF :: exp -> exp -> exp
   , modF :: exp -> exp -> exp
   , expcoercionF :: exp -> exp
-  , nondetF :: expl -> exp
+  , nondetF :: [exp] -> exp
   , preopF :: uop -> exp -> exp
   , nowF :: exp
   , constF :: con -> exp
-  , varF :: idl -> exp
+  , varF :: [id] -> exp
 
   , constantIntF :: Integer -> con
   , constantTrueF :: con
@@ -146,31 +123,8 @@ data RebecaAlgebra
   , opAssignAddF :: aop
   , opAssignSubF :: aop
 
-  , mainF :: insl -> mai
+  , mainF :: [ins] -> mai
 
-  , instanceDeclF :: tvd -> vdl -> expl -> ins
-
-  , nilEnv :: envl
-  , consEnv :: [env] -> envl
-  , nilRcl :: rcl
-  , consRcl :: [rc] -> rcl
-  , nilMs :: msl
-  , consMs :: [ms] -> msl
-  , nilTvd :: tvdl
-  , consTvd :: [tvd] -> tvdl
-  , nilTp :: tpl
-  , consTp :: [tp] -> tpl
-  , nilStm :: stml
-  , consStm :: [stm] -> stml
-  , nilExp :: expl
-  , consExp :: [exp] -> expl
-  , nilEli :: elil
-  , consEli :: [eli] -> elil
-  , nilId :: idl
-  , consId :: [id] -> idl
-  , nilIns :: insl
-  , consIns :: [ins] -> insl
-  , nilVd :: vdl
-  , consVd :: [vd] -> vdl
+  , instanceDeclF :: tvd -> [vd] -> [exp] -> ins
 }
 

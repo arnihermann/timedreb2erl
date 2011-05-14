@@ -11,81 +11,81 @@ import Language.Rebeca.Fold
 import Debug.Trace
 import System.IO.Unsafe
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) Ident (m id) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) Ident (m id) where
     fold f (Ident s) = midentF f s
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) Model (m mod) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) Model (m mod) where
     fold f (Model vars classes mainbody) = join $ liftM3 (mmodelF f) (fold f vars) (fold f classes) (fold f mainbody)
     -- do { vars' <- fold f vars; classes' <- fold f classes; mainbody' <- fold f mainbody; mmodelF f vars' classes' mainbody' }
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) EnvVar (m env) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) EnvVar (m env) where
     fold f (EnvVar tp) = join $ liftM (menvVarF f) (fold f tp)
     -- do { tp' <- fold f tp; menvVarF f tp' }
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) ReactiveClass (m rc) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) ReactiveClass (m rc) where
     fold f (ReactiveClass name qs kr sv msi ms) = do { name' <- fold f name; kr' <- fold f kr; sv' <- fold f sv; msi' <- fold f msi; ms' <- fold f ms; mreactiveClassF f name' qs kr' sv' msi' ms'}
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) KnownRebecs (m kr) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) KnownRebecs (m kr) where
     fold f NoKnownRebecs = mnoKnownRebecsF f
     fold f (KnownRebecs tvds) = join $ liftM (mknownRebecsF f) (fold f tvds)
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) StateVars (m sv) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) StateVars (m sv) where
     fold f NoStateVars = mnoStateVarsF f
     fold f (StateVars tvds) = join $ liftM (mstateVarsF f) (fold f tvds)
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) MsgSrvInit (m msi) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) MsgSrvInit (m msi) where
     fold f (MsgSrvInit tps stms) = join $ liftM2 (mmsgSrvInitF f) (fold f tps) (fold f stms)
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) MsgSrv (m ms) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) MsgSrv (m ms) where
     fold f (MsgSrv id tps stms) = join $ liftM3 (mmsgSrvF f) (fold f id) (fold f tps) (fold f stms)
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) VarDecl (m vd) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) VarDecl (m vd) where
     fold f (VDeclAssign id exp) = join $ liftM2 (mvDeclAssignF f) (fold f id) (fold f exp)
     fold f (VDecl id) = join $ liftM (mvDeclF f) (fold f id)
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) TypedVarDecl (m tvd) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) TypedVarDecl (m tvd) where
     fold f (TypedVarDecl tn id) = join $ liftM2 (mtypedVarDeclF f) (fold f tn) (fold f id)
     fold f (TypedVarDeclAss tn id exp) = join $ liftM3 (mtypedVarDeclAssF f) (fold f tn) (fold f id) (fold f exp)
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) TypedParameter (m tp) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) TypedParameter (m tp) where
     fold f (TypedParameter tn id) = join $ liftM2 (mtypedParameterF f) (fold f tn) (fold f id)
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) BasicType (m bt) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) BasicType (m bt) where
     fold f Tint = mbasicTypeIntF f
     fold f Ttime = mbasicTypeTimeF f
     fold f Tboolean = mbasicTypeBooleanF f
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) TypeName (m tn) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) TypeName (m tn) where
     fold f (BuiltIn bt) = join $ liftM (mbuiltInF f) (fold f bt)
     fold f (ClassType id) = join $ liftM (mclassTypeF f) (fold f id)
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) Stm (m stm) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) Stm (m stm) where
     fold f (Ass id aop exp) = join $ liftM3 (massF f) (fold f id) (fold f aop) (fold f exp)
     fold f (Local var) = join $ liftM (mlocalF f) (fold f var)
     fold f (Call id0 id exps after deadline) = join $ liftM5 (mcallF f) (fold f id0) (fold f id) (fold f exps) (fold f after) (fold f deadline)
     fold f (Delay exp) = join $ liftM (mdelayF f) (fold f exp)
     fold f (Sel exp cs elif el) = join $ liftM4 (mselF f) (fold f exp) (fold f cs) (fold f elif) (fold f el)
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) CompStm (m cs) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) CompStm (m cs) where
     fold f (SingleCompoundStm stm) = join $ liftM (msingleCompStmF f) (fold f stm)
     fold f (MultCompoundStm stms) = join $ liftM (mmultCompStmF f) (fold f stms)
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) After (m aft) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) After (m aft) where
     fold f (NoAfter) = mnoAfterF f
     fold f (WithAfter exp) = join $ liftM (mwithAfterF f) (fold f exp)
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) Deadline (m dea) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) Deadline (m dea) where
     fold f (NoDeadline) = mnoDeadlineF f
     fold f (WithDeadline exp) = join $ liftM (mwithDeadlineF f) (fold f exp)
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) ElseifStm (m eli) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) ElseifStm (m eli) where
     fold f (ElseifStm exp cs) = join $ liftM2 (melseifStmF f) (fold f exp) (fold f cs)
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) ElseStm (m el) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) ElseStm (m el) where
     fold f EmptyElseStm = memptyElseStmF f
     fold f (ElseStm cs) = join $ liftM (melseStmF f) (fold f cs)
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) Exp (m exp) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) Exp (m exp) where
     fold f (Elor exp0 exp) = join $ liftM2 (mlorF f) (fold f exp0) (fold f exp)
     fold f (Eland exp0 exp) = join $ liftM2 (mlandF f) (fold f exp0) (fold f exp)
     fold f (Ebitor exp0 exp) = join $ liftM2 (mbitorF f) (fold f exp0) (fold f exp)
@@ -111,18 +111,18 @@ instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp 
     fold f (Econst constant) = join $ liftM (mconstF f) (fold f constant)
     fold f (Evar idents) = join $ liftM (mvarF f) (fold f idents)
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) Constant (m con) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) Constant (m con) where
     fold f (Eint i) = mconstantIntF f i
     fold f Etrue = mconstantTrueF f
     fold f Efalse = mconstantFalseF f
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) UnaryOperator (m uop) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) UnaryOperator (m uop) where
     fold f Plus = munaryPlusF f
     fold f Negative = munaryNegativeF f
     fold f Complement = munaryComplementF f
     fold f Logicalneg = munaryLogicalNegF f
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) AssignmentOp (m aop) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) AssignmentOp (m aop) where
     fold f Assign = mopAssignF f
     fold f AssignMul = mopAssignMulF f
     fold f AssignDiv = mopAssignDivF f
@@ -130,54 +130,9 @@ instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp 
     fold f AssignAdd = mopAssignAddF f
     fold f AssignSub = mopAssignSubF f
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) Main (m mai) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) Main (m mai) where
     fold f (Main inss) = join $ liftM (mmainF f) (fold f inss)
 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) InstanceDecl (m ins) where
+instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) InstanceDecl (m ins) where
     fold f (InstanceDecl tvd vds exps) = join $ liftM3 (minstanceDeclF f) (fold f tvd) (fold f vds) (fold f exps)
-
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [EnvVar] (m envl) where
-    fold f [] = mnilEnv f
-    fold f lst = do { lst' <- mapM (fold f) lst; mconsEnv f lst' }
-
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [ReactiveClass] (m rcl) where
-    fold f [] = mnilRcl f
-    fold f lst = do { lst' <- mapM (fold f) lst; mconsRcl f lst' }
- 
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [MsgSrv] (m msl) where
-    fold f [] = mnilMs f
-    fold f lst = do { lst' <- mapM (fold f) lst; mconsMs f lst' }
-
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [TypedVarDecl] (m tvdl) where
-    fold f [] = mnilTvd f
-    fold f lst = do { lst' <- mapM (fold f) lst; mconsTvd f lst' }
-
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [TypedParameter] (m tpl) where
-    fold f [] = mnilTp f
-    fold f lst = do { lst' <- mapM (fold f) lst; mconsTp f lst' }
-
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [Stm] (m stml) where
-    fold f [] = mnilStm f
-    fold f lst = do { lst' <- mapM (fold f) lst; mconsStm f lst' }
-
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [Exp] (m expl) where
-    fold f [] = mnilExp f
-    fold f lst = do { lst' <- mapM (fold f) lst; mconsExp f lst' }
-
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [ElseifStm] (m elil) where
-    fold f [] = mnilEli f
-    fold f lst = do { lst' <- mapM (fold f) lst; mconsEli f lst' }
-
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [Ident] (m idl) where
-    fold f [] = mnilId f
-    fold f lst = do { lst' <- mapM (fold f) lst; mconsId f lst' }
-
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [InstanceDecl] (m insl) where
-    fold f [] = mnilIns f
-    fold f lst = do { lst' <- mapM (fold f) lst; mconsIns f lst' }
-
-instance Monad m => Fold (RebecaAlgebraM m id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins envl rcl msl tvdl tpl stml expl elil idl insl vdl) [VarDecl] (m vdl) where
-    fold f [] = mnilVd f
-    fold f lst = do { lst' <- mapM (fold f) lst; mconsVd f lst' }
-
 

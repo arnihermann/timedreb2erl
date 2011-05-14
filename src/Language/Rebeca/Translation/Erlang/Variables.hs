@@ -12,12 +12,12 @@ import Language.Rebeca.Translation.Erlang.Monoid
 
 stateVarsAlgebra :: Unify [String]
 stateVarsAlgebra = monoidAlgebra {
-    stateVarsF = \tvds -> tvds
+    stateVarsF = \tvds -> mconcat tvds
 }
 
 knownRebecsAlgebra :: Unify [String]
 knownRebecsAlgebra = monoidAlgebra {
-    knownRebecsF = \tvds -> tvds
+    knownRebecsF = \tvds -> mconcat tvds
 }
 
 localVarsAlgebra :: Unify [String]

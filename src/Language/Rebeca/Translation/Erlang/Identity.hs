@@ -102,52 +102,6 @@ identityAlgebra = RebecaAlgebra {
   , mainF = Main
 
   , instanceDeclF = InstanceDecl
-
-  , nilEnv = []
-  , consEnv = id
-  , nilRcl = []
-  , consRcl = id
-  , nilMs = []
-  , consMs = id
-  , nilTvd = []
-  , consTvd = id
-  , nilTp = []
-  , consTp = id
-  , nilStm = []
-  , consStm = id
-  , nilExp = []
-  , consExp = id
-  , nilEli = []
-  , consEli = id
-  , nilId = []
-  , consId = id
-  , nilIns = []
-  , consIns = id
-  , nilVd = []
-  , consVd = id
-
-  {-, nilEnv = EnvList []-}
-  {-, consEnv = EnvList-}
-  {-, nilRcl = RcList []-}
-  {-, consRcl = RcList-}
-  {-, nilMs = MsList []-}
-  {-, consMs = MsList-}
-  {-, nilTvd = TvdList []-}
-  {-, consTvd = TvdList-}
-  {-, nilTp = TpList []-}
-  {-, consTp = TpList-}
-  {-, nilStm = StmList []-}
-  {-, consStm = StmList-}
-  {-, nilExp = ExpList []-}
-  {-, consExp = ExpList-}
-  {-, nilEli = EliList []-}
-  {-, consEli = EliList-}
-  {-, nilId = IdList []-}
-  {-, consId = IdList-}
-  {-, nilIns = InsList []-}
-  {-, consIns = InsList-}
-  {-, nilVd = VdList []-}
-  {-, consVd = VdList-}
 }
 
 -- this can be quick-check tested

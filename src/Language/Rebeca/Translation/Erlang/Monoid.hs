@@ -8,16 +8,16 @@ import Language.Rebeca.Absrebeca
 import Language.Rebeca.Algebra
 import Language.Rebeca.Fold
 
-type Unify a = RebecaAlgebra a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a
+type Unify a = RebecaAlgebra a a a a a a a a a a a a a a a a a a a a a a a a a
 
 monoidAlgebra = RebecaAlgebra {
     identF = \s -> [s]
 
-  , modelF = \envs rcs mai -> envs `mappend` rcs
+  , modelF = \envs rcs mai -> (mconcat envs) `mappend` (mconcat rcs)
 
   , envVarF = \_ -> mempty
 
-  , reactiveClassF = \id _ kr sv msi ms -> kr `mappend` sv `mappend` msi `mappend` ms
+  , reactiveClassF = \id _ kr sv msi ms -> kr `mappend` sv `mappend` msi `mappend` (mconcat ms)
 
   , noKnownRebecsF = mempty
   , knownRebecsF = \_ -> mempty
@@ -25,9 +25,9 @@ monoidAlgebra = RebecaAlgebra {
   , noStateVarsF = mempty
   , stateVarsF = \_ -> mempty
 
-  , msgSrvInitF = \tps stms -> tps `mappend` stms
+  , msgSrvInitF = \tps stms -> (mconcat tps) `mappend` (mconcat stms)
 
-  , msgSrvF = \_ tps stms -> tps `mappend` stms
+  , msgSrvF = \_ tps stms -> (mconcat tps) `mappend` (mconcat stms)
 
   , vDeclAssignF = \id _ -> id
   , vDeclF = \id -> id
@@ -108,29 +108,6 @@ monoidAlgebra = RebecaAlgebra {
   , mainF = \ins -> mempty
 
   , instanceDeclF = \tvd vds exps -> mempty
-
-  , nilEnv = mempty
-  , consEnv = mconcat
-  , nilRcl = mempty
-  , consRcl = mconcat
-  , nilMs = mempty
-  , consMs = mconcat
-  , nilTvd = mempty
-  , consTvd = mconcat
-  , nilTp = mempty
-  , consTp = mconcat
-  , nilStm = mempty
-  , consStm = mconcat
-  , nilExp = mempty
-  , consExp = mconcat
-  , nilEli = mempty
-  , consEli = mconcat
-  , nilId = mempty
-  , consId = mconcat
-  , nilIns = mempty
-  , consIns = mconcat
-  , nilVd = mempty
-  , consVd = mconcat
 }
 
 {-testMonoidAlgebra :: Model -> [String]-}

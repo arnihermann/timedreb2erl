@@ -6,7 +6,7 @@ import Language.Erlang.Syntax
 import qualified Language.Rebeca.Absrebeca as R
 import Language.Rebeca.Algebra
 import Language.Rebeca.Fold
-import Language.Rebeca.FoldM
+{-import Language.Rebeca.FoldM-}
 
 type EnvVars = [String]
 type KnownRebecs = [String]
@@ -19,140 +19,140 @@ initialState = ([], [], [], [])
 
 {-refinementAlgebra :: RebecaAlgebra String Program String [Function] [Name] [Name] Match Match vd Name Name bt tn Exp Exp (Maybe Exp) (Maybe Exp) eli el Exp BasicValue BasicValue aop Function ins-}
 refinementAlgebra = RebecaAlgebra {
-    identF = \id -> id
+    identF = \id -> return id
 
-  , modelF = \envs rcs mai -> Program (Module "test") [Export "none"] [Import "none"] (concat rcs ++ [mai])
+  , modelF = \envs rcs mai -> sequence envs >>= \envs' ->
+                              sequence rcs >>= \rcs' ->
+                              mai >>= \mai' ->
+                              return $ Program (Module "test") [Export "none"] [Import "none"] (concat rcs' ++ [mai'])
 
-  , envVarF = \tp -> "env"
+  , envVarF = \tp -> return "env"
 
-  , reactiveClassF = \id _ kr sv msi ms -> [ Function id [PatVar "Env", PatVar "InstanceName"] $
-                                                Receive [ Match (PatT (map PatVar kr)) Nothing $
-                                                            Apply id [ ExpVar "Env", ExpVar "InstanceName"
-                                                                     , Apply "dict:from_list" (concat $ map (\k -> [ExpVal $ AtomicLiteral k, ExpVar k]) kr)
+  , reactiveClassF = \id _ kr sv msi ms -> id >>= \id' ->
+                                           kr >>= \kr' ->
+                                           sv >>= \sv' ->
+                                           msi >>= \msi' ->
+                                           sequence ms >>= \ms' ->
+                                           return $ [ Function id' [PatVar "Env", PatVar "InstanceName"] $
+                                                Receive [ Match (PatT (map PatVar kr')) Nothing $
+                                                            Apply id' [ ExpVar "Env", ExpVar "InstanceName"
+                                                                     , Apply "dict:from_list" (concat $ map (\k -> [ExpVal $ AtomicLiteral k, ExpVar k]) kr')
                                                                      ]
                                                         ]
-                                           , Function id [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs"] $
-                                                Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive [msi])
-                                           , Function id [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs", PatVar "StateVars"] $
-                                                Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive ms)
+                                           , Function id' [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs"] $
+                                                Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive [msi'])
+                                           , Function id' [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs", PatVar "StateVars"] $
+                                                Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive ms')
                                            ]
-  , noKnownRebecsF = []
-  , knownRebecsF = id 
+  , noKnownRebecsF = return []
+  , knownRebecsF = \tvds -> sequence tvds >>= \tvds' -> return tvds'
 
-  , noStateVarsF = []
-  , stateVarsF = id
+  , noStateVarsF = return []
+  , stateVarsF = \tvds -> sequence tvds >>= \tvds' -> return tvds'
 
-  , msgSrvInitF = \tps stms -> Match (PatT $ (PatVal $ AtomicLiteral "initial"):(map PatVar tps)) Nothing (apply $ reverse stms)
+  , msgSrvInitF = \tps stms -> sequence tps >>= \tps' ->
+                               sequence stms >>= \stms' ->
+                               return $ Match (PatT $ (PatVal $ AtomicLiteral "initial"):(map PatVar tps')) Nothing (apply $ reverse stms')
 
-  , msgSrvF = \id tps stms -> Match (PatT $ (PatVal $ AtomicLiteral id):(map PatVar tps)) Nothing (apply $ reverse stms)
+  , msgSrvF = \id tps stms -> id >>= \id' ->
+                              sequence tps >>= \tps' ->
+                              sequence stms >>= \stms' ->
+                              return $ Match (PatT $ (PatVal $ AtomicLiteral id'):(map PatVar tps')) Nothing (apply $ reverse stms')
 
-  , vDeclAssignF = \id exp -> error "alg: vDeclAssignF"
-  , vDeclF = \id -> error "alg: vDeclF"
+  , vDeclAssignF = \id _ -> id
+  , vDeclF = \id -> id
 
-  , typedVarDeclF = \tn id -> id
-  , typedVarDeclAssF = \tn id exp -> id
+  , typedVarDeclF = \_ id -> id
+  , typedVarDeclAssF = \_ id _ -> id
 
-  , typedParameterF = \tn id -> id
+  , typedParameterF = \_ id -> id
 
-  , basicTypeIntF = error "alg: basicTypeIntF"
-  , basicTypeTimeF = error "alg: basicTypeTimeF"
-  , basicTypeBooleanF = error "alg: basicTypeBooleanF"
+  , basicTypeIntF = return "int"
+  , basicTypeTimeF = return "time"
+  , basicTypeBooleanF = return "boolean"
 
-  , builtInF = \bt -> error "alg: builtInF"
-  , classTypeF = \id -> error "alg: classTypeF"
+  , builtInF = \bt -> bt
+  , classTypeF = \id -> id
 
-  , assF = \id aop exp -> stm $ Apply "dict:store" [ExpVal $ AtomicLiteral id, exp, ExpVar "StateVars"]
-  , localF = \tvd -> stm $ (ExpVal $ AtomicLiteral "return this")
-  , callF = \id0 id exps aft dea -> stm $ case aft of -- TODO lookup id0
-                                                Nothing -> Seq (Apply "tr_send" [ExpVar id0, ExpVal $ AtomicLiteral id, ExpT exps]) retstm
-                                                Just aft' -> Seq (Apply "tr_sendafter" [aft', ExpVar id0, ExpVal $ AtomicLiteral id, ExpT exps]) retstm
-  , delayF = \exp -> stm $ Seq (Apply "tr_delay" [exp]) retstm
-  , selF = \exp cs elseifs els -> stm $ If [Match (PatE exp) Nothing cs]
+  , assF = \id aop exp -> id >>= \id' ->
+                          aop >>= \aop' ->
+                          exp >>= \exp' ->
+                          return $ stm $ Apply "dict:store" [ExpVal $ AtomicLiteral id', exp', ExpVar "StateVars"]
+  , localF = \tvd -> tvd >>= \tvd' ->
+                     return $ stm $ (ExpVal $ AtomicLiteral "return this")
+  , callF = \id0 id exps aft dea -> id0 >>= \id0' ->
+                                    id >>= \id' ->
+                                    sequence exps >>= \exps' ->
+                                    aft >>= \aft' ->
+                                    dea >>= \dea' ->
+                                    return $ stm $ case aft' of -- TODO lookup id0
+                                                Nothing -> Seq (Apply "tr_send" [ExpVar id0', ExpVal $ AtomicLiteral id', ExpT exps']) retstm
+                                                Just aft'' -> Seq (Apply "tr_sendafter" [aft'', ExpVar id0', ExpVal $ AtomicLiteral id', ExpT exps']) retstm
+  , delayF = \exp -> exp >>= \exp' -> return $ stm $ Seq (Apply "tr_delay" [exp']) retstm
+  , selF = \exp cs elseifs els -> exp >>= \exp' -> cs >>= \cs' -> sequence elseifs >>= \elseifs' -> els >>= \els' -> return $ stm $ If [Match (PatE exp') Nothing cs']
 
-  , singleCompStmF = \stm -> Call stm params
-  , multCompStmF = \stms -> case stms of
+  , singleCompStmF = \stm -> stm >>= \stm' -> return $ Call stm' params
+  , multCompStmF = \stms -> sequence stms >>= \stms' ->
+                        return $ case stms' of
                             [] -> retstm
                             [stm] -> Call stm params
-                            _ -> apply $ reverse stms
+                            _ -> apply $ reverse stms'
 
-  , noAfterF = Nothing
-  , withAfterF = \exp -> Just exp
+  , noAfterF = return $ Nothing
+  , withAfterF = \exp -> exp >>= \exp' -> return $ Just exp'
 
-  , noDeadlineF = Nothing
-  , withDeadlineF = \exp -> Just exp
+  , noDeadlineF = return $ Nothing
+  , withDeadlineF = \exp -> exp >>= \exp' -> return $ Just exp'
 
-  , elseifStmF = \exp cs -> error "alg: elseifStmF"
+  , elseifStmF = \exp cs -> exp >>= \exp' -> cs >>= \cs' -> return $ Match (PatVal $ AtomicLiteral "true") Nothing retstm
 
-  , emptyElseStmF = error "alg: emptyElseStmF"
-  , elseStmF = \cs -> error "alg: elseStmF"
+  , emptyElseStmF = return $ Match (PatVal $ AtomicLiteral "true") Nothing retstm
+  , elseStmF = \cs -> cs >>= \cs' -> return $ Match (PatVal $ AtomicLiteral "true") Nothing retstm
 
-  , lorF = \exp0 exp -> ExpVal $ AtomicLiteral "lor"
-  , landF = \exp0 exp -> ExpVal $ AtomicLiteral "land"
-  , bitorF = \exp0 exp -> ExpVal $ AtomicLiteral "bitor"
-  , bitexorF = \exp0 exp -> ExpVal $ AtomicLiteral "bitexor"
-  , bitandF = \exp0 exp -> ExpVal $ AtomicLiteral "bitand"
-  , eqF = \exp0 exp -> InfixExp OpEq exp0 exp
-  , neqF = \exp0 exp -> InfixExp OpNEq exp0 exp
-  , lthenF = \exp0 exp -> ExpVal $ AtomicLiteral "lthen"
-  , grthenF = \exp0 exp -> ExpVal $ AtomicLiteral "grthen"
-  , leF = \exp0 exp -> ExpVal $ AtomicLiteral "le"
-  , geF = \exp0 exp -> ExpVal $ AtomicLiteral "ge"
-  , leftF = \exp0 exp -> ExpVal $ AtomicLiteral "left"
-  , rightF = \exp0 exp -> ExpVal $ AtomicLiteral "right"
-  , plusF = \exp0 exp -> InfixExp OpAdd exp0 exp
-  , minusF = \exp0 exp -> ExpVal $ AtomicLiteral "minus"
-  , timesF = \exp0 exp -> ExpVal $ AtomicLiteral "times"
-  , divF = \exp0 exp -> ExpVal $ AtomicLiteral "div"
-  , modF = \exp0 exp -> ExpVal $ AtomicLiteral "mod"
-  , expcoercionF = \exp -> ExpVal $ AtomicLiteral "expcoercion"
-  , nondetF = \exps -> ExpVal $ AtomicLiteral "nondet"
-  , preopF = \uop exp -> Call (ExpVal uop) exp
-  , nowF = ExpVal $ AtomicLiteral "now"
-  , constF = \con -> ExpVal con
-  , varF = \_ -> ExpVal $ AtomicLiteral "var" -- :: R.Exp -> exp
+  , lorF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return $ ExpVal $ AtomicLiteral "lor"
+  , landF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return $ ExpVal $ AtomicLiteral "land"
+  , bitorF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return $ ExpVal $ AtomicLiteral "bitor"
+  , bitexorF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return $ ExpVal $ AtomicLiteral "bitexor"
+  , bitandF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return $ ExpVal $ AtomicLiteral "bitand"
+  , eqF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return $ InfixExp OpEq exp0' exp'
+  , neqF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return $ InfixExp OpNEq exp0' exp'
+  , lthenF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return $ ExpVal $ AtomicLiteral "lthen"
+  , grthenF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return $ ExpVal $ AtomicLiteral "grthen"
+  , leF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return $ ExpVal $ AtomicLiteral "le"
+  , geF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return $ ExpVal $ AtomicLiteral "ge"
+  , leftF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return $ ExpVal $ AtomicLiteral "left"
+  , rightF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return $ ExpVal $ AtomicLiteral "right"
+  , plusF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return $ InfixExp OpAdd exp0' exp'
+  , minusF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return $ ExpVal $ AtomicLiteral "minus"
+  , timesF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return $ ExpVal $ AtomicLiteral "times"
+  , divF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return $ ExpVal $ AtomicLiteral "div"
+  , modF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return $ ExpVal $ AtomicLiteral "mod"
+  , expcoercionF = \exp -> exp >>= \exp' -> return $ ExpVal $ AtomicLiteral "expcoercion"
+  , nondetF = \exps -> sequence exps >>= \exps' -> return $ ExpVal $ AtomicLiteral "nondet"
+  , preopF = \uop exp -> uop >>= \uop' -> exp >>= \exp' -> return $ Call (ExpVal uop') exp'
+  , nowF = return $ ExpVal $ AtomicLiteral "now"
+  , constF = \con -> con >>= \con' -> return $ ExpVal con'
+  , varF = \ids -> sequence ids >>= \ids' -> return $ ExpVal $ AtomicLiteral "var" -- :: R.Exp -> exp
 
-  , constantIntF = \i -> NumberLiteral i
-  , constantTrueF = AtomicLiteral "true"
-  , constantFalseF = AtomicLiteral "false"
+  , constantIntF = \i -> return $ NumberLiteral i
+  , constantTrueF = return $ AtomicLiteral "true"
+  , constantFalseF = return $ AtomicLiteral "false"
 
-  , unaryPlusF = AtomicLiteral "+"
-  , unaryNegativeF = AtomicLiteral "-"
+  , unaryPlusF = return $ AtomicLiteral "+"
+  , unaryNegativeF = return $ AtomicLiteral "-"
   , unaryComplementF = error "alg: unaryComplementF"
-  , unaryLogicalNegF = AtomicLiteral "not"
+  , unaryLogicalNegF = return $ AtomicLiteral "not"
 
-  , opAssignF = error "alg: opAssignF"
+  , opAssignF = return "="
   , opAssignMulF = error "alg: opAssignMulF"
   , opAssignDivF = error "alg: opAssignDivF"
   , opAssignModF = error "alg: opAssignModF"
   , opAssignAddF = error "alg: opAssignAddF"
   , opAssignSubF = error "alg: opAssignSubF"
 
-  , mainF = \_ -> Function "main" [] (ExpVal $ AtomicLiteral "return main")
+  , mainF = \ins -> sequence ins >>= \ins' -> return $ Function "main" [] (ExpVal $ AtomicLiteral "return main")
 
-  , instanceDeclF = \tvd vds exps -> error "alg: instanceDeclF"
-
-  , nilEnv = []
-  , consEnv = id
-  , nilRcl = []
-  , consRcl = id
-  , nilMs = []
-  , consMs = id
-  , nilTvd = []
-  , consTvd = id
-  , nilTp = []
-  , consTp = id
-  , nilStm = []
-  , consStm = id
-  , nilExp = []
-  , consExp = id
-  , nilEli = []
-  , consEli = id
-  , nilId = []
-  , consId = id
-  , nilIns = []
-  , consIns = id
-  , nilVd = []
-  , consVd = id
+  , instanceDeclF = \tvd vds exps -> tvd >>= \tvd' -> sequence vds >>= \vds' -> sequence exps >>= \exps' -> return $ ExpVal $ AtomicLiteral "return instancedecl"
 }
 
 params = ExpT [ExpVar "StateVars", ExpVar "LocalVars"]
@@ -164,5 +164,5 @@ retstm = ExpT [ExpVar "StateVars", ExpVar "LocalVars"]
 {-translateRefinment mod = evalState (fold refinementAlgebra mod) initialState -}
 
 translateRefinement :: R.Model -> Program
-translateRefinement = fold refinementAlgebra
+translateRefinement model = evalState (fold refinementAlgebra model) initialState
 
