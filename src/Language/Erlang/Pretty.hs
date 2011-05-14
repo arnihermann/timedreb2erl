@@ -72,7 +72,7 @@ expr (If ms) = text "if"
     $+$ inBlock (map match ms)
     $+$ text "end"
 expr (Send exp0 exp) = expr exp0 <+> text "!" <+> expr exp
-expr (Seq exp0 exp) = expr exp0 <> comma <+> expr exp
+expr (Seq exp0 exp) = expr exp0 <> comma $+$ expr exp
 expr (Assign pat exp) = pattern pat <+> text "=" <+> expr exp
 expr (ExpT exps) = braces $ commaSep (map expr exps)
 expr (ExpL exps) = brackets $ commaSep (map expr exps)

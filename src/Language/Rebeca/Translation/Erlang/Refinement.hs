@@ -17,36 +17,52 @@ type CompilerState = State (EnvVars, KnownRebecs, StateVars, LocalVars)
 
 initialState = ([], [], [], [])
 
+setEnvVars names = get >>= \(_, kr, sv, lv) -> put (names, kr, sv, lv)
+setKnownRebecs names = get >>= \(env, _, sv, lv) -> put (env, names, sv, lv)
+setStateVars names = get >>= \(env, kr, _, lv) -> put (env, kr, names, lv)
+setLocalVars names = get >>= \(env, kr, sv, _) -> put (env, kr, sv, names)
+
+{-getEnvVars = get >>= \(env, kr, sv, lv) -> return env-}
+{-getKnownRebecs = get >>= \(env, kr, sv, lv) -> return kr-}
+{-getStateVars = get >>= \(env, kr, sv, lv) -> return sv-}
+{-getLocalVars = get >>= \(env, kr, sv, lv) -> return lv-}
+
+resetState :: CompilerState ()
+resetState = State $ \_ -> ((), initialState)
+
 refinementAlgebra = RebecaAlgebra {
     identF = \id -> return id
 
   , modelF = \envs rcs mai -> sequence envs >>= \envs' -> sequence rcs >>= \rcs' -> mai >>= \mai' -> return (Program (Module "test") [Export "none"] [Import "none"] (concat rcs' ++ [mai']))
 
-  , envVarF = \tp -> return "env"
+  , envVarF = \tp -> tp
 
   , reactiveClassF = \id _ kr sv msi ms -> id >>= \id' ->
                                            kr >>= \kr' ->
                                            sv >>= \sv' ->
                                            msi >>= \msi' ->
                                            sequence ms >>= \ms' ->
-                                               return $ [ Function id' [PatVar "Env", PatVar "InstanceName"] $
+                                               resetState >> return ([ Function id' [PatVar "Env", PatVar "InstanceName"] $
                                                     Receive [ Match (PatT (map PatVar kr')) Nothing $
                                                                 Apply id' [ ExpVar "Env", ExpVar "InstanceName"
-                                                                         , Apply "dict:from_list" (concat $ map (\k -> [ExpVal $ AtomicLiteral k, ExpVar k]) kr')
+                                                                         , Apply "dict:from_list" [ExpL (concat $ map (\k -> [ExpVal $ AtomicLiteral k, ExpVar k]) kr')]
                                                                          ]
                                                             ]
                                                , Function id' [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs"] $
-                                                    Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive [msi'])
+                                                    Seq (Assign (PatVar "StateVars") (Apply "dict:from_list" [ExpL (concat $ map (\s -> [ExpVal $ AtomicLiteral s, ExpVal $ AtomicLiteral "default"]) sv')]))
+                                                        (Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive [msi']))
                                                , Function id' [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs", PatVar "StateVars"] $
                                                     Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive ms')
-                                               ]
+                                               ])
   , noKnownRebecsF = return []
-  , knownRebecsF = \tvds -> sequence tvds >>= \tvds' -> return tvds'
+  , knownRebecsF = \tvds -> sequence tvds >>= \tvds' -> setKnownRebecs tvds' >> return tvds'
 
   , noStateVarsF = return []
-  , stateVarsF = \tvds -> sequence tvds >>= \tvds' -> return tvds'
+  , stateVarsF = \tvds -> sequence tvds >>= \tvds' -> setStateVars tvds' >> return tvds'
 
-  , msgSrvInitF = \tps stms -> sequence tps >>= \tps' -> sequence stms >>= \stms' -> return (Match (PatT $ (PatVal $ AtomicLiteral "initial"):(map PatVar tps')) Nothing (apply $ reverse stms'))
+  , msgSrvInitF = \tps stms -> sequence tps >>= \tps' -> sequence stms >>= \stms' ->
+                               let patterns = (PatT $ (PatVal $ AtomicLiteral "initial"):(map PatVar tps'))
+                               in return (Match patterns Nothing (apply $ reverse stms'))
 
   , msgSrvF = \id tps stms -> id >>= \id' -> sequence tps >>= \tps' -> sequence stms >>= \stms' -> return (Match (PatT $ (PatVal $ AtomicLiteral id'):(map PatVar tps')) Nothing (apply $ reverse stms'))
 
