@@ -9,17 +9,27 @@ import Language.Rebeca.Fold
 
 import Language.Rebeca.Translation.Erlang.Monoid
 
-{-stateVarsAlgebra :: Monoid m => RebecaAlgebra m m m m m m m m m m m m m m m m m m m m m m m m m-}
-{-stateVarsAlgebra :: Unify [String]-}
+stateVarsAlgebra :: Unify [String]
+stateVarsAlgebra = monoidAlgebra {
+    stateVarsF = \tvds -> mconcat tvds
+}
 
-{-stateVarsAlgebra :: RebecaAlgebra [[String]] [String] [String] [String] [[[String]]] [[[String]]] [[[String]]] [[String]] a1 tvd tp a2 tn stm cs aft dea eli el exp con uop aop mai ins-}
+knownRebecsAlgebra :: Unify [String]
+knownRebecsAlgebra = monoidAlgebra {
+    knownRebecsF = \tvds -> mconcat tvds
+}
 
-{-stateVarsAlgebra :: String [String] String String [[String]] [[String]] [[String]] [String] a1 tvd tp a2 tn stm cs aft dea eli el exp con uop aop mai ins-}
-{-stateVarsAlgebra = monoidAlgebra {-}
-    {-identF = \s -> [s]-}
-  {-, stateVarsF = \tvds -> tvds-}
-{-}-}
+localVarsAlgebra :: Unify [String]
+localVarsAlgebra = monoidAlgebra {
+    localF = \tvd -> tvd
+}
 
-{-stateVarNames :: Model -> [String]-}
-{-stateVarNames = fold stateVarsAlgebra-}
+stateVarNames :: Model -> [String]
+stateVarNames = fold stateVarsAlgebra
+
+knownRebecNames :: Model -> [String]
+knownRebecNames = fold knownRebecsAlgebra
+
+localVarNames :: Model -> [String]
+localVarNames = fold localVarsAlgebra
 

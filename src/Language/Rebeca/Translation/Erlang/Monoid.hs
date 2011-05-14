@@ -9,109 +9,106 @@ import Language.Rebeca.Fold
 
 type Unify a = RebecaAlgebra a a a a a a a a a a a a a a a a a a a a a a a a a
 
-concat2 = concat . concat
+monoidAlgebra = RebecaAlgebra {
+    identF = \s -> [s]
 
-{-monoidAlgebra :: (Monoid id, Monoid mod, Monoid env, Monoid rc, Monoid kr, Monoid sv, Monoid msi, Monoid ms, Monoid vd, Monoid tvd, Monoid tp, Monoid bt, Monoid tn, Monoid stm, Monoid cs, Monoid aft, Monoid dea, Monoid eli, Monoid el, Monoid exp, Monoid con, Monoid uop, Monoid aop, Monoid mai, Monoid ins) => RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins-}
-{-monoidAlgebra :: (Monoid m, Monoid ms) => RebecaAlgebra m [ms] ms [ms] m [ms] m m m [ms] [ms] m m [ms] m m m [ms] m [ms] m m m [ms] m-}
-{-monoidAlgebra :: Monoid m => Unify m-}
+  , modelF = \envs rcs mai -> (mconcat envs) `mappend` (mconcat rcs)
 
-{-monoidAlgebra = RebecaAlgebra {-}
-    {-identF = \s -> mempty-}
+  , envVarF = \_ -> mempty
 
-  {-, modelF = \envs rcs mai -> envs `mappend` rcs -- envs `mappend` rcs `mappend` mai-}
+  , reactiveClassF = \id _ kr sv msi ms -> kr `mappend` sv `mappend` msi `mappend` (mconcat ms)
 
-  {-, envVarF = \_ -> mempty-}
+  , noKnownRebecsF = mempty
+  , knownRebecsF = \_ -> mempty
 
-  {-, reactiveClassF = \id _ kr sv msi ms -> concat2 $ [id] `mappend` kr `mappend` sv `mappend` msi `mappend` ms-}
+  , noStateVarsF = mempty
+  , stateVarsF = \_ -> mempty
 
-  {-, noKnownRebecsF = mempty-}
-  {-, knownRebecsF = \_ -> mempty-}
+  , msgSrvInitF = \tps stms -> (mconcat tps) `mappend` (mconcat stms)
 
-  {-, noStateVarsF = mempty-}
-  {-, stateVarsF = \_ -> mempty-}
+  , msgSrvF = \_ tps stms -> (mconcat tps) `mappend` (mconcat stms)
 
-  {-, msgSrvInitF = \tps stms -> mempty-}
+  , vDeclAssignF = \id exp -> mempty
+  , vDeclF = \id -> mempty
 
-  {-, msgSrvF = \id tps stms -> mempty-}
+  , typedVarDeclF = \tn id -> id
+  , typedVarDeclAssF = \tn id _ -> id
 
-  {-, vDeclAssignF = \id exp -> mempty-}
-  {-, vDeclF = \id -> mempty-}
+  , typedParameterF = \tn id -> id
 
-  {-, typedVarDeclF = \tn id -> mempty-}
-  {-, typedVarDeclAssF = \tn id exp -> mempty-}
+  , basicTypeIntF = mempty
+  , basicTypeTimeF = mempty
+  , basicTypeBooleanF = mempty
 
-  {-, typedParameterF = \tn id -> mempty-}
+  , builtInF = \_ -> mempty
+  , classTypeF = \_ -> mempty
 
-  {-, basicTypeIntF = mempty-}
-  {-, basicTypeTimeF = mempty-}
-  {-, basicTypeBooleanF = mempty-}
+  , assF = \_ _ _ -> mempty
+  , localF = \_ -> mempty
+  , callF = \_ _ _ _ _ -> mempty
+  , delayF = \_ -> mempty
+  , selF = \_ _ _ _ -> mempty
 
-  {-, builtInF = \_ -> mempty-}
-  {-, classTypeF = \_ -> mempty-}
+  , singleCompStmF = \stm -> mempty
+  , multCompStmF = \stms -> mempty
 
-  {-, assF = \id aop exp -> mempty-}
-  {-, localF = \tvd -> mempty-}
-  {-, callF = \id0 id exps aft dea -> mempty-}
-  {-, delayF = \exp -> mempty-}
-  {-, selF = \exp cs elseifs els -> mempty-}
+  , noAfterF = mempty
+  , withAfterF = \exp -> mempty
 
-  {-, singleCompStmF = \stm -> mempty-}
-  {-, multCompStmF = \stms -> mempty-}
+  , noDeadlineF = mempty
+  , withDeadlineF = \exp -> mempty
 
-  {-, noAfterF = mempty-}
-  {-, withAfterF = \exp -> mempty-}
+  , elseifStmF = \exp cs -> mempty
 
-  {-, noDeadlineF = mempty-}
-  {-, withDeadlineF = \exp -> mempty-}
+  , emptyElseStmF = mempty
+  , elseStmF = \cs -> mempty
 
-  {-, elseifStmF = \exp cs -> mempty-}
+  , lorF = mappend
+  , landF = mappend
+  , bitorF = mappend
+  , bitexorF = mappend
+  , bitandF = mappend
+  , eqF = mappend
+  , neqF = mappend
+  , lthenF = mappend
+  , grthenF = mappend
+  , leF = mappend
+  , geF = mappend
+  , leftF = mappend
+  , rightF = mappend
+  , plusF = mappend
+  , minusF = mappend
+  , timesF = mappend
+  , divF = mappend
+  , modF = mappend
+  , expcoercionF = \exp -> mempty
+  , nondetF = \exps -> mempty
+  , preopF = \uop exp -> mempty
+  , nowF = mempty
+  , constF = \con -> mempty
+  , varF = \vs -> mempty
 
-  {-, emptyElseStmF = mempty-}
-  {-, elseStmF = \cs -> mempty-}
+  , constantIntF = \_ -> mempty
+  , constantTrueF = mempty
+  , constantFalseF = mempty
 
-  {-, lorF = mappend-}
-  {-, landF = mappend-}
-  {-, bitorF = mappend-}
-  {-, bitexorF = mappend-}
-  {-, bitandF = mappend-}
-  {-, eqF = mappend-}
-  {-, neqF = mappend-}
-  {-, lthenF = mappend-}
-  {-, grthenF = mappend-}
-  {-, leF = mappend-}
-  {-, geF = mappend-}
-  {-, leftF = mappend-}
-  {-, rightF = mappend-}
-  {-, plusF = mappend-}
-  {-, minusF = mappend-}
-  {-, timesF = mappend-}
-  {-, divF = mappend-}
-  {-, modF = mappend-}
-  {-, expcoercionF = \exp -> mempty-}
-  {-, nondetF = \exps -> mempty-}
-  {-, preopF = \uop exp -> mempty-}
-  {-, nowF = mempty-}
-  {-, constF = \con -> mempty-}
-  {-, varF = \vs -> mempty-}
+  , unaryPlusF = mempty
+  , unaryNegativeF = mempty
+  , unaryComplementF = mempty
+  , unaryLogicalNegF = mempty
 
-  {-, constantIntF = \_ -> mempty-}
-  {-, constantTrueF = mempty-}
-  {-, constantFalseF = mempty-}
+  , opAssignF = mempty
+  , opAssignMulF = mempty
+  , opAssignDivF = mempty
+  , opAssignModF = mempty
+  , opAssignAddF = mempty
+  , opAssignSubF = mempty
 
-  {-, unaryPlusF = mempty-}
-  {-, unaryNegativeF = mempty-}
-  {-, unaryComplementF = mempty-}
-  {-, unaryLogicalNegF = mempty-}
+  , mainF = \ins -> mempty
 
-  {-, opAssignF = mempty-}
-  {-, opAssignMulF = mempty-}
-  {-, opAssignDivF = mempty-}
-  {-, opAssignModF = mempty-}
-  {-, opAssignAddF = mempty-}
-  {-, opAssignSubF = mempty-}
+  , instanceDeclF = \tvd vds exps -> mempty
+}
 
-  {-, mainF = \ins -> mempty-}
-
-  {-, instanceDeclF = \tvd vds exps -> mempty-}
-{-}-}
+{-testMonoidAlgebra :: Model -> [String]-}
+{-testMonoidAlgebra = fold monoidAlgebra-}
 
