@@ -85,14 +85,15 @@ refinementAlgebra = RebecaAlgebra {
   , msgSrvInitF = \tps stms -> do
         tps' <- sequence tps
         stms' <- sequence stms
-        let patterns = (PatT $ (PatVal $ AtomicLiteral "initial"):(map PatVar tps'))
+        let patterns = PatT [PatT [PatVar "Sender", PatVar "TT", PatVar "DL"], PatVal $ AtomicLiteral "initial", PatT (map PatVar tps')]
         return (Match patterns Nothing (apply $ reverse stms'))
 
   , msgSrvF = \id tps stms -> do
         id' <- id
         tps' <- sequence tps
         stms' <- sequence stms
-        return (Match (PatT $ (PatVal $ AtomicLiteral id'):(map PatVar tps')) Nothing (apply $ reverse stms'))
+        let patterns = PatT [PatT [PatVar "Sender", PatVar "TT", PatVar "DL"], PatVal $ AtomicLiteral id', PatT (map PatVar tps')]
+        return (Match patterns Nothing (apply $ reverse stms'))
 
   , vDeclAssignF = \id _ -> id
   , vDeclF = \id -> id
