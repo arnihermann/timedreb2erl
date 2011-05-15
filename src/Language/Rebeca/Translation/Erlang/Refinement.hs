@@ -193,7 +193,24 @@ refinementAlgebra = RebecaAlgebra {
   , preopF = \uop exp -> uop >>= \uop' -> exp >>= \exp' -> return (Call (ExpVal uop') exp')
   , nowF = return (ExpVal $ AtomicLiteral "now")
   , constF = \con -> con >>= \con' -> return (ExpVal con')
-  , varF = \ids -> sequence ids >>= \ids' -> return (ExpVal $ AtomicLiteral "var") -- :: R.Exp -> exp
+  , varF = \ids -> do
+        ids' <- sequence ids
+        sv <- getStateVars
+        kr <- getKnownRebecs
+        lv <- getLocalVars
+        env <- getEnvVars
+        case ids' of
+            "self":[id] -> return (Apply "dict:fetch" [ExpVal $ AtomicLiteral id, ExpVar "StateVars"])
+            [id] -> if id `elem` sv
+                    then return (Apply "dict:fetch" [ExpVal $ AtomicLiteral id, ExpVar "StateVars"])
+                    else if id `elem` kr
+                         then return (Apply "dict:fetch" [ExpVal $ AtomicLiteral id, ExpVar "KnownRebecs"])
+                         else if id `elem` lv
+                              then return (Apply "dict:fetch" [ExpVal $ AtomicLiteral id, ExpVar "LocalVars"])
+                              else if id `elem` sv
+                                   then return (Apply "dict:fetch" [ExpVal $ AtomicLiteral id, ExpVar "Env"])
+                                   else return (ExpVar id) -- TODO: not safe, needs to lookup from formal parameters of method
+            _ -> error "no variable or functionality not implemented"
 
   , constantIntF = \i -> return (NumberLiteral i)
   , constantTrueF = return (AtomicLiteral "true")
