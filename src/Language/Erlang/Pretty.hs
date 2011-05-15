@@ -56,7 +56,7 @@ infop op = text $ case op of
     OpBOr -> "BOR" 
     OpAdd -> "+"
 
-match (Match pat guard exp) = pattern pat <+> text "->" <+> expr exp
+match (Match pat guard exp) = pattern pat <+> text "->" $+$ inBlock1 (expr exp)
 
 expr (InfixExp op exp0 exp) = expr exp0 <+> infop op <+> expr exp
 expr (Apply name exps) = text name <> (parens $ commaSep (map expr exps))

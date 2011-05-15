@@ -86,14 +86,18 @@ refinementAlgebra = RebecaAlgebra {
         tps' <- sequence tps
         stms' <- sequence stms
         let patterns = PatT [PatT [PatVar "Sender", PatVar "TT", PatVar "DL"], PatVal $ AtomicLiteral "initial", PatT (map PatVar tps')]
-        return (Match patterns Nothing (apply $ reverse stms'))
+            now = Assign (PatVar "TimeNow") (Apply "tr_now" [])
+            pred = InfixExp OpLAnd (InfixExp OpEq (ExpVar "DL") (ExpVal $ AtomicLiteral "inf")) (InfixExp OpLT (ExpVar "TimeNow") (ExpVar "DL"))
+        return (Match patterns Nothing (Seq now (If [Match (PatE pred) Nothing (apply $ reverse stms')])))
 
   , msgSrvF = \id tps stms -> do
         id' <- id
         tps' <- sequence tps
         stms' <- sequence stms
         let patterns = PatT [PatT [PatVar "Sender", PatVar "TT", PatVar "DL"], PatVal $ AtomicLiteral id', PatT (map PatVar tps')]
-        return (Match patterns Nothing (apply $ reverse stms'))
+            now = Assign (PatVar "TimeNow") (Apply "tr_now" [])
+            pred = InfixExp OpLAnd (InfixExp OpEq (ExpVar "DL") (ExpVal $ AtomicLiteral "inf")) (InfixExp OpLT (ExpVar "TimeNow") (ExpVar "DL"))            
+        return (Match patterns Nothing (Seq now (If [Match (PatE pred) Nothing (apply $ reverse stms')])))
 
   , vDeclAssignF = \id _ -> id
   , vDeclF = \id -> id
@@ -196,7 +200,7 @@ refinementAlgebra = RebecaAlgebra {
   , expcoercionF = \exp -> exp >>= \exp' -> return (ExpVal $ AtomicLiteral "expcoercion")
   , nondetF = \exps -> sequence exps >>= \exps' -> return (ExpVal $ AtomicLiteral "nondet")
   , preopF = \uop exp -> uop >>= \uop' -> exp >>= \exp' -> return (Call (ExpVal uop') exp')
-  , nowF = return (Apply "now" [])
+  , nowF = return (Apply "tr_now" [])
   , constF = \con -> con >>= \con' -> return (ExpVal con')
   , varF = \ids -> do
         ids' <- sequence ids
