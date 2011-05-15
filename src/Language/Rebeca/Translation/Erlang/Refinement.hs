@@ -54,6 +54,8 @@ refinementAlgebra = RebecaAlgebra {
         sv' <- sv
         msi' <- msi
         ms' <- sequence ms
+        let initialsv = Assign (PatVar "StateVars") (Apply "dict:from_list" [ExpL (concat $ map (\(d, i) -> [ExpVal $ AtomicLiteral i, ExpVal $ AtomicLiteral d]) sv')])
+            initiallv = Assign (PatVar "LocalVars") (Apply "dict:from_list" [ExpL []])
         return ([ Function id' [PatVar "Env", PatVar "InstanceName"] $
             Receive [ Match (PatT (map PatVar kr')) Nothing $
                         Apply id' [ ExpVar "Env", ExpVar "InstanceName"
@@ -61,10 +63,12 @@ refinementAlgebra = RebecaAlgebra {
                                  ]
                     ]
             , Function id' [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs"] $
-                Seq (Assign (PatVar "StateVars") (Apply "dict:from_list" [ExpL (concat $ map (\(d, i) -> [ExpVal $ AtomicLiteral i, ExpVal $ AtomicLiteral d]) sv')]))
-                    (Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive [msi']))
+                Seq initialsv
+                    (Seq initiallv
+                         (Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive [msi'])))
             , Function id' [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs", PatVar "StateVars"] $
-                Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive ms')
+                Seq initiallv
+                    (Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive ms'))
             ])
   , noKnownRebecsF = return []
   , knownRebecsF = \tvds -> do
@@ -191,7 +195,7 @@ refinementAlgebra = RebecaAlgebra {
   , expcoercionF = \exp -> exp >>= \exp' -> return (ExpVal $ AtomicLiteral "expcoercion")
   , nondetF = \exps -> sequence exps >>= \exps' -> return (ExpVal $ AtomicLiteral "nondet")
   , preopF = \uop exp -> uop >>= \uop' -> exp >>= \exp' -> return (Call (ExpVal uop') exp')
-  , nowF = return (ExpVal $ AtomicLiteral "now")
+  , nowF = return (Apply "now" [])
   , constF = \con -> con >>= \con' -> return (ExpVal con')
   , varF = \ids -> do
         ids' <- sequence ids
