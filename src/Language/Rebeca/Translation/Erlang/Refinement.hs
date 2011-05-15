@@ -179,8 +179,8 @@ refinementAlgebra = RebecaAlgebra {
   , emptyElseStmF = return (Match (PatVal $ AtomicLiteral "true") Nothing retstm)
   , elseStmF = \cs -> cs >>= \cs' -> return (Match (PatVal $ AtomicLiteral "true") Nothing retstm)
 
-  , lorF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return (ExpVal $ AtomicLiteral "lor")
-  , landF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return (ExpVal $ AtomicLiteral "land")
+  , lorF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return (InfixExp OpLOr exp0' exp')
+  , landF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return (InfixExp OpLAnd exp0' exp')
   , bitorF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return (ExpVal $ AtomicLiteral "bitor")
   , bitexorF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return (ExpVal $ AtomicLiteral "bitexor")
   , bitandF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return (ExpVal $ AtomicLiteral "bitand")
