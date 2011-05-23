@@ -42,9 +42,10 @@ refinementAlgebra = RebecaAlgebra {
 
   , modelF = \envs rcs mai -> do
         envs' <- sequence envs
+        setEnvVars envs'
         rcs' <- sequence rcs
         mai' <- mai
-        return (Program (Module "test") [Export "none"] [Import "none"] (concat rcs' ++ [mai']))
+        return (Program (Module "test") [Export ("main/" ++ (show $ length envs'))] [Import "timedreb.erl"] (concat rcs' ++ [mai']))
 
   , envVarF = \tp -> tp
 
@@ -55,7 +56,7 @@ refinementAlgebra = RebecaAlgebra {
         msi' <- msi
         ms' <- sequence ms
         let initialsv = Assign (PatVar "StateVars") (Apply "dict:from_list" [ExpL (concat $ map (\(d, i) -> [ExpVal $ AtomicLiteral i, ExpVal $ AtomicLiteral d]) sv')])
-            initiallv = Assign (PatVar "LocalVars") (Apply "dict:from_list" [ExpL []])
+            initiallv = Assign (PatVar "LocalVars") (Apply "dict:new" [])
         return ([ Function id' [PatVar "Env", PatVar "InstanceName"] $
             Receive [ Match (PatT (map PatVar kr')) Nothing $
                         Apply id' [ ExpVar "Env", ExpVar "InstanceName"
@@ -86,18 +87,18 @@ refinementAlgebra = RebecaAlgebra {
         tps' <- sequence tps
         stms' <- sequence stms
         let patterns = PatT [PatT [PatVar "Sender", PatVar "TT", PatVar "DL"], PatVal $ AtomicLiteral "initial", PatT (map PatVar tps')]
-            now = Assign (PatVar "TimeNow") (Apply "tr_now" [])
-            pred = InfixExp OpLOr (InfixExp OpEq (ExpVar "DL") (ExpVal $ AtomicLiteral "inf")) (InfixExp OpLT (ExpVar "TimeNow") (ExpVar "DL"))
-        return (Match patterns Nothing (Seq now (If [Match (PatE pred) Nothing (apply $ reverse stms')])))
+            pred = InfixExp OpLOr (InfixExp OpEq (ExpVar "DL") (ExpVal $ AtomicLiteral "inf")) (InfixExp OpLEq (Apply "tr_now" []) (ExpVar "DL"))
+        return (Match patterns Nothing (If [ Match (PatE pred) Nothing (formatReceive "initial" $ apply $ reverse stms')
+                                           , Match (PatVal $ AtomicLiteral "true") Nothing (formatDrop "initial" retstm)]))
 
   , msgSrvF = \id tps stms -> do
         id' <- id
         tps' <- sequence tps
         stms' <- sequence stms
         let patterns = PatT [PatT [PatVar "Sender", PatVar "TT", PatVar "DL"], PatVal $ AtomicLiteral id', PatT (map PatVar tps')]
-            now = Assign (PatVar "TimeNow") (Apply "tr_now" [])
-            pred = InfixExp OpLOr (InfixExp OpEq (ExpVar "DL") (ExpVal $ AtomicLiteral "inf")) (InfixExp OpLT (ExpVar "TimeNow") (ExpVar "DL"))            
-        return (Match patterns Nothing (Seq now (If [Match (PatE pred) Nothing (apply $ reverse stms')])))
+            pred = InfixExp OpLOr (InfixExp OpEq (ExpVar "DL") (ExpVal $ AtomicLiteral "inf")) (InfixExp OpLEq (Apply "tr_now" []) (ExpVar "DL"))
+        return (Match patterns Nothing (If [ Match (PatE pred) Nothing (formatReceive id' $ apply $ reverse stms')
+                                           , Match (PatVal $ AtomicLiteral "true") Nothing (formatDrop id' retstm)]))
 
   , vDeclAssignF = \id _ -> id
   , vDeclF = \id -> id
@@ -237,15 +238,27 @@ refinementAlgebra = RebecaAlgebra {
   , opAssignAddF = error "alg: opAssignAddF"
   , opAssignSubF = error "alg: opAssignSubF"
 
-  , mainF = \ins -> sequence ins >>= \ins' -> return (Function "main" [] (ExpVal $ AtomicLiteral "return main"))
+  , mainF = \ins -> do
+        ins' <- sequence ins
+        envs <- getEnvVars
+        let spawns = foldr1 Seq (map fst ins')
+            links = foldr1 Seq (map (fst . snd) ins')
+            initials = foldr1 Seq (map (snd . snd) ins')
+        return (Function "main" (map PatVar envs) (Seq spawns (Seq links initials)))
 
   , instanceDeclF = \tvd vds exps -> do
         tvd' <- tvd
         vds' <- sequence vds
         exps' <- sequence exps
-        return (ExpVal $ AtomicLiteral "return instancedecl")
+        kr <- getKnownRebecs
+        let spawn = Assign (PatVar (snd tvd')) (Call (ExpVal $ AtomicLiteral "spawn") (FunAnon [] (Apply (snd tvd') [])))
+            link = Send (ExpVar (snd tvd')) (ExpT (map ExpVar vds'))
+            initial = Apply "tr_send" [ExpVar (snd tvd'), ExpVal $ AtomicLiteral "initial"]
+        return (spawn,(link,initial))
 }
 
+formatReceive msgsrv e = Seq (Apply "io:format" [ExpVal $ StringLiteral $ "~s." ++ msgsrv ++ "~n", ExpL [ExpVar "InstanceName"]]) e
+formatDrop msgsrv e = Seq (Apply "io:format" [ExpVal $ StringLiteral $ "dropping ~s." ++ msgsrv ++ "~n", ExpL [ExpVar "InstanceName"]]) e
 params = ExpT [ExpVar "StateVars", ExpVar "LocalVars"]
 stm = FunAnon [PatT [PatVar "StateVars", PatVar "LocalVars"]]
 apply = foldr Call params

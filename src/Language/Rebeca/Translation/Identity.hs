@@ -1,4 +1,4 @@
-module Language.Rebeca.Translation.Erlang.Identity where
+module Language.Rebeca.Translation.Identity where
 
 import Language.Rebeca.Absrebeca
 import Language.Rebeca.Algebra

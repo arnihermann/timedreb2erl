@@ -20,6 +20,7 @@ data Function = Function Name [Pattern] Exp
   deriving (Eq,Ord,Show,Data,Typeable)
 
 data BasicValue = AtomicLiteral String
+    | StringLiteral String
     | NumberLiteral Integer
     | ProcessLiteral String
   deriving (Eq,Ord,Show,Data,Typeable)

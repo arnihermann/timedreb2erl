@@ -1,6 +1,6 @@
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
-module Language.Rebeca.Translation.Erlang.Variables where
+module Language.Rebeca.Translation.Variables where
 
 import Data.Monoid
 
@@ -8,7 +8,7 @@ import Language.Rebeca.Absrebeca
 import Language.Rebeca.Algebra
 import Language.Rebeca.Fold
 
-import Language.Rebeca.Translation.Erlang.Monoid
+import Language.Rebeca.Translation.Monoid
 
 stateVarsAlgebra :: Unify [String]
 stateVarsAlgebra = monoidAlgebra {

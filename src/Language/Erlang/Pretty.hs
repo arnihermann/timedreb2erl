@@ -29,6 +29,7 @@ commaSep :: [Doc] -> Doc
 commaSep docs = hcat (punctuate (comma <> space) docs)
 
 val (AtomicLiteral s) = text (firstLower s)
+val (StringLiteral s) = doubleQuotes (text s)
 val (NumberLiteral i) = text (show i)
 val (ProcessLiteral s) = text (firstUpper s)
 
