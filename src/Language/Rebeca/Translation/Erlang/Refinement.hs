@@ -87,7 +87,7 @@ refinementAlgebra = RebecaAlgebra {
         stms' <- sequence stms
         let patterns = PatT [PatT [PatVar "Sender", PatVar "TT", PatVar "DL"], PatVal $ AtomicLiteral "initial", PatT (map PatVar tps')]
             now = Assign (PatVar "TimeNow") (Apply "tr_now" [])
-            pred = InfixExp OpLAnd (InfixExp OpEq (ExpVar "DL") (ExpVal $ AtomicLiteral "inf")) (InfixExp OpLT (ExpVar "TimeNow") (ExpVar "DL"))
+            pred = InfixExp OpLOr (InfixExp OpEq (ExpVar "DL") (ExpVal $ AtomicLiteral "inf")) (InfixExp OpLT (ExpVar "TimeNow") (ExpVar "DL"))
         return (Match patterns Nothing (Seq now (If [Match (PatE pred) Nothing (apply $ reverse stms')])))
 
   , msgSrvF = \id tps stms -> do
@@ -96,7 +96,7 @@ refinementAlgebra = RebecaAlgebra {
         stms' <- sequence stms
         let patterns = PatT [PatT [PatVar "Sender", PatVar "TT", PatVar "DL"], PatVal $ AtomicLiteral id', PatT (map PatVar tps')]
             now = Assign (PatVar "TimeNow") (Apply "tr_now" [])
-            pred = InfixExp OpLAnd (InfixExp OpEq (ExpVar "DL") (ExpVal $ AtomicLiteral "inf")) (InfixExp OpLT (ExpVar "TimeNow") (ExpVar "DL"))            
+            pred = InfixExp OpLOr (InfixExp OpEq (ExpVar "DL") (ExpVal $ AtomicLiteral "inf")) (InfixExp OpLT (ExpVar "TimeNow") (ExpVar "DL"))            
         return (Match patterns Nothing (Seq now (If [Match (PatE pred) Nothing (apply $ reverse stms')])))
 
   , vDeclAssignF = \id _ -> id
