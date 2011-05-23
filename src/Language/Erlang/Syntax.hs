@@ -12,7 +12,7 @@ data Program = Program Attribute [Attribute] [Attribute] [Attribute] [Function] 
   deriving (Eq,Ord,Show,Data,Typeable)
 
 data Attribute = Module Name
-               | Export Name
+               | Export [Name]
                | Import Name
                | Define Name BasicValue
   deriving (Eq,Ord,Show,Data,Typeable)

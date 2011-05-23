@@ -41,9 +41,9 @@ pattern (PatE e) = expr e
 
 infop op = text $ case op of
     OpLT -> "<"
-    OpLEq -> "<="
+    OpLEq -> "=<"
     OpGT -> ">"
-    OpGEq -> "=>" 
+    OpGEq -> ">=" 
     OpEq -> "==" 
     OpNEq -> "=/=" 
     OpLAnd -> "andalso" 
@@ -85,7 +85,7 @@ expr (ExpVar name) = text $ firstUpper name
 func (Function name formals exp) = text (firstLower name) <> (parens $ commaSep $ map pattern formals) <+> text "->" $+$ inBlock [expr exp]
 
 attr (Module name) = text "-module" <> (parens $ text (firstLower name))
-attr (Export name) = text "-export" <> (parens $ text name)
+attr (Export names) = text "-export" <> (parens $ commaSep (map text names))
 attr (Import name) = text "-import" <> (parens $ doubleQuotes $ text name)
 attr (Define name value) = text "-define" <> (parens $ text name <> comma <+> val value)
 

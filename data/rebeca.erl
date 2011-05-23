@@ -1,5 +1,7 @@
 -module(rebeca).
 
+-define(RT_FACTOR, 1000).
+
 delay(T) ->
   receive
   after (T * ?RT_FACTOR) ->
@@ -20,7 +22,7 @@ send(Rebec, Msg, Params) ->
   send(Rebec, Msg, Params, inf).
 
 send(Rebec, Msg, Params, Deadline) ->
-  Rebec ! {{self(), now(), Deadline}, Msg, Params}.
+  Rebec ! {{self(), rebeca:now(), Deadline}, Msg, Params}.
 
 % messages with delay
 sendafter(After, Rebec, Msg) ->
@@ -31,7 +33,7 @@ sendafter(After, Rebec, Msg, Params) ->
 
 sendafter(After, Rebec, Msg, Params, Deadline) ->
   Sender = self(),
-  LocalNow = now(),
+  LocalNow = rebeca:now(),
   spawn(fun () ->
     receive
     after (After * ?RT_FACTOR) -> 
