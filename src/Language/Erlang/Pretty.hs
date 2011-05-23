@@ -60,7 +60,8 @@ infop op = text $ case op of
 match (Match pat guard exp) = pattern pat <+> text "->" $+$ inBlock1 (expr exp)
 
 expr (InfixExp op exp0 exp) = expr exp0 <+> infop op <+> expr exp
-expr (Apply name exps) = text name <> (parens $ commaSep (map expr exps))
+expr (ModExp n1 n2) = text (firstLower n1) <> colon <> text (firstLower n2)
+expr (Apply name exps) = expr name <> (parens $ commaSep (map expr exps))
 expr (Call exp0 exp) = expr exp0 <> (parens $ expr exp)
 expr (Case exp ms) = text "case" <+> expr exp <+> text "of" -- TODO
 expr (FunAnon ps exp) = text "fun" <> (parens $ commaSep (map pattern ps)) <+> text "->"

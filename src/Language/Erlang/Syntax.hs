@@ -30,7 +30,8 @@ data InfixOp = OpLT | OpLEq | OpGT | OpGEq | OpEq | OpNEq | OpLAnd | OpLOr
   deriving (Eq,Ord,Show,Data,Typeable)
 
 data Exp = InfixExp InfixOp Exp Exp
-    | Apply Name [Exp]
+    | ModExp Name Name
+    | Apply Exp [Exp]
     | Call Exp Exp
     | Case Exp [Match]
     | FunAnon [Pattern] Exp
