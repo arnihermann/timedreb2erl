@@ -45,7 +45,7 @@ refinementAlgebra = RebecaAlgebra {
         setEnvVars envs'
         rcs' <- sequence rcs
         mai' <- mai
-        return (Program (Module "test") [Export ("main/" ++ (show $ length envs'))] [Import "timedreb.erl"] (concat rcs' ++ [mai']))
+        return (Program (Module "test") [Export ("main/" ++ (show $ length envs'))] [Import "rebeca.erl"] [Define "RT_FACTOR" (NumberLiteral 1000)] (concat rcs' ++ [mai']))
 
   , envVarF = \tp -> tp
 

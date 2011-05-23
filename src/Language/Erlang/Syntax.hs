@@ -8,12 +8,13 @@ type Name = String
 
 type Arity = Integer
 
-data Program = Program Attribute [Attribute] [Attribute] [Function] -- module, export, import
+data Program = Program Attribute [Attribute] [Attribute] [Attribute] [Function] -- module, export, import, define
   deriving (Eq,Ord,Show,Data,Typeable)
 
 data Attribute = Module Name
                | Export Name
                | Import Name
+               | Define Name BasicValue
   deriving (Eq,Ord,Show,Data,Typeable)
 
 data Function = Function Name [Pattern] Exp

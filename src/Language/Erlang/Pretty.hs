@@ -86,9 +86,14 @@ func (Function name formals exp) = text (firstLower name) <> (parens $ commaSep 
 
 attr (Module name) = text "-module" <> (parens $ text (firstLower name))
 attr (Export name) = text "-export" <> (parens $ text name)
-attr (Import name) = text "-import" <> (parens $ text name)
+attr (Import name) = text "-import" <> (parens $ doubleQuotes $ text name)
+attr (Define name value) = text "-define" <> (parens $ text name <> comma <+> val value)
 
-program (Program mod exp imp fns) = vcat $ intersperse emptyLine [attr mod <> dot, vcat (map (enddot . attr) exp), vcat (map (enddot . attr) imp), vcat (map (enddot . func) fns)]
+program (Program mod exp imp def fns) = vcat $ intersperse emptyLine [ attr mod <> dot
+                                                                     , vcat (map (enddot . attr) exp)
+                                                                     , vcat (map (enddot . attr) imp)
+                                                                     , vcat (map (enddot . attr) def)
+                                                                     , vcat (map (enddot . func) fns) ]
   where
     enddot = flip (<>) dot
 
