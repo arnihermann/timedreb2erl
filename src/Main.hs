@@ -4,7 +4,7 @@ module Main where
 
 import System.Console.CmdArgs
 import System.Directory (createDirectoryIfMissing)
-import System.FilePath ((</>), (<.>), dropExtension)
+import System.FilePath ((</>), (<.>), dropExtension, takeFileName)
 
 import Control.Applicative
 
@@ -99,7 +99,7 @@ main :: IO ()
 main = do
     Params{..} <- cmdArgsRun params
     mod <- fromFile modelFile
-    let moduleName = dropExtension modelFile
+    let moduleName = (dropExtension . takeFileName) modelFile
         simplepro = Sim.simplifyAssignment mod
         {-statevars = V.stateVarNames simplepro-}
         {-knownrebecs = V.knownRebecNames simplepro-}
