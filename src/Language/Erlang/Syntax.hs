@@ -33,7 +33,7 @@ data InfixOp = OpLT | OpLEq | OpGT | OpGEq | OpEq | OpNEq | OpLAnd | OpLOr
 data Exp = InfixExp InfixOp Exp Exp
     | ModExp Name Name
     | Apply Exp [Exp]
-    | Call Exp Exp
+    | Call Exp Exp -- TODO: remove, we don't need Call, Apply is good enough
     | Case Exp [Match]
     | FunAnon [Pattern] Exp
     | Receive [Match]
@@ -54,7 +54,6 @@ data Pattern = PatVar Name
     | PatT [Pattern] -- tuple
     | PatL [Pattern] -- list
     | PatVal BasicValue
-    | PatE Exp -- escape hatch (beware!)
   deriving (Eq,Ord,Show,Data,Typeable)
 
 data Guard = InfixGuard Guard Guard

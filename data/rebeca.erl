@@ -1,5 +1,11 @@
 -module(rebeca).
 
+-export([delay/1]).
+-export([now/0]).
+-export([send/2, send/3, send/4]).
+-export([sendafter/3, sendafter/4, sendafter/5]).
+-export([nondet/1]).
+
 -define(RT_FACTOR, 1000).
 
 delay(T) ->

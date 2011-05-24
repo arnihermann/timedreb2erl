@@ -37,7 +37,6 @@ pattern (PatVar s) = text (firstUpper s)
 pattern (PatT ps) = braces (commaSep $ map pattern ps)
 pattern (PatL ps) = brackets (commaSep $ map pattern ps)
 pattern (PatVal v) = val v
-pattern (PatE e) = expr e
 
 infop op = text $ case op of
     OpLT -> "<"
@@ -63,15 +62,17 @@ expr (InfixExp op exp0 exp) = expr exp0 <+> infop op <+> expr exp
 expr (ModExp n1 n2) = text (firstLower n1) <> colon <> text (firstLower n2)
 expr (Apply name exps) = expr name <> (parens $ commaSep (map expr exps))
 expr (Call exp0 exp) = expr exp0 <> (parens $ expr exp)
-expr (Case exp ms) = text "case" <+> expr exp <+> text "of" -- TODO
+expr (Case exp ms) = text "case" <+> expr exp <+> text "of"
+    $+$ inBlock (punctuate semi (map match ms))
+    $+$ text "end"
 expr (FunAnon ps exp) = text "fun" <> (parens $ commaSep (map pattern ps)) <+> text "->"
     $+$ inBlock1 (expr exp)
-    $+$ text "end" -- TODO
+    $+$ text "end"
 expr (Receive ms) = text "receive"
-    $+$ inBlock (map match ms)
-    $+$ text "end" -- TODO
+    $+$ inBlock (punctuate semi (map match ms))
+    $+$ text "end"
 expr (If ms) = text "if"
-    $+$ inBlock (map match ms)
+    $+$ inBlock (punctuate semi (map match ms))
     $+$ text "end"
 expr (Send exp0 exp) = expr exp0 <+> text "!" <+> expr exp
 expr (Seq exp0 exp) = expr exp0 <> comma $+$ expr exp

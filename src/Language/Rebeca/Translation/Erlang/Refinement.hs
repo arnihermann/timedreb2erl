@@ -44,7 +44,7 @@ refinementAlgebra = RebecaAlgebra {
         rcs' <- sequence rcs
         mai' <- mai
         moduleName <- ask
-        return (Program (Module moduleName) [Export ["main/" ++ (show $ length envs')]] [] [Define "RT_FACTOR" (NumberLiteral 1000)] (concat rcs' ++ [mai']))
+        return (Program (Module moduleName) [Export ["main/" ++ (show $ length envs')]] [] [] (concat rcs' ++ [mai']))
 
   , envVarF = \tp -> tp
 
@@ -54,21 +54,18 @@ refinementAlgebra = RebecaAlgebra {
         sv' <- sv
         msi' <- msi
         ms' <- sequence ms
-        let initialsv = Assign (PatVar "StateVars") (Apply (ModExp "dict" "from_list") [ExpL (concat $ map (\(d, i) -> [ExpVal $ AtomicLiteral i, ExpVal $ AtomicLiteral d]) sv')])
+        let initialsv = Assign (PatVar "StateVars") (Apply (ModExp "dict" "from_list") [ExpL (map (\(d, i) -> ExpT [ExpVal $ AtomicLiteral i, ExpVal $ AtomicLiteral d]) sv')])
             initiallv = Assign (PatVar "LocalVars") (Apply (ModExp "dict" "new") [])
+            recurs = Apply (ExpVal $ AtomicLiteral id') [ExpVar "Env", ExpVar "InstanceName", ExpVar "KnownRebecs", ExpVar "NewStateVars"]
         return ([ Function id' [PatVar "Env", PatVar "InstanceName"] $
-            Receive [ Match (PatT (map PatVar kr')) Nothing $
-                        Apply (ExpVal $ AtomicLiteral id') [ ExpVar "Env", ExpVar "InstanceName"
-                                 , Apply (ModExp "dict" "from_list") [ExpL (concat $ map (\k -> [ExpVal $ AtomicLiteral k, ExpVar k]) kr')]
-                                 ]
-                    ]
+              Receive [ Match (PatT (map PatVar kr')) Nothing $
+                Apply (ExpVal $ AtomicLiteral id') [ ExpVar "Env", ExpVar "InstanceName"
+                                                   , Apply (ModExp "dict" "from_list") [ExpL (map (\k -> ExpT [ExpVal $ AtomicLiteral k, ExpVar k]) kr')]
+                                                   ]]
             , Function id' [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs"] $
-                Seq initialsv
-                    (Seq initiallv
-                         (Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive [msi'])))
+                Seq (Seq initialsv (Seq initiallv (Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive [msi'])))) recurs
             , Function id' [PatVar "Env", PatVar "InstanceName", PatVar "KnownRebecs", PatVar "StateVars"] $
-                Seq initiallv
-                    (Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive ms'))
+                Seq (Seq initiallv (Assign (PatT [PatVar "NewStateVars", PatVar "_"]) (Receive ms'))) recurs
             ])
   , noKnownRebecsF = return []
   , knownRebecsF = \tvds -> do
@@ -87,8 +84,8 @@ refinementAlgebra = RebecaAlgebra {
         stms' <- sequence stms
         let patterns = PatT [PatT [PatVar "Sender", PatVar "TT", PatVar "DL"], PatVal $ AtomicLiteral "initial", PatT (map PatVar tps')]
             pred = InfixExp OpLOr (InfixExp OpEq (ExpVar "DL") (ExpVal $ AtomicLiteral "inf")) (InfixExp OpLEq (Apply (ModExp "rebeca" "now") []) (ExpVar "DL"))
-        return (Match patterns Nothing (If [ Match (PatE pred) Nothing (formatReceive "initial" $ apply $ reverse stms')
-                                           , Match (PatVal $ AtomicLiteral "true") Nothing (formatDrop "initial" retstm)]))
+        return (Match patterns Nothing (Case pred [ Match (PatVal $ AtomicLiteral "true") Nothing (formatReceive "initial" $ apply $ reverse stms')
+                                                  , Match (PatVal $ AtomicLiteral "false") Nothing (formatDrop "initial" retstm)]))
 
   , msgSrvF = \id tps stms -> do
         id' <- id
@@ -96,8 +93,8 @@ refinementAlgebra = RebecaAlgebra {
         stms' <- sequence stms
         let patterns = PatT [PatT [PatVar "Sender", PatVar "TT", PatVar "DL"], PatVal $ AtomicLiteral id', PatT (map PatVar tps')]
             pred = InfixExp OpLOr (InfixExp OpEq (ExpVar "DL") (ExpVal $ AtomicLiteral "inf")) (InfixExp OpLEq (Apply (ModExp "rebeca" "now") []) (ExpVar "DL"))
-        return (Match patterns Nothing (If [ Match (PatE pred) Nothing (formatReceive id' $ apply $ reverse stms')
-                                           , Match (PatVal $ AtomicLiteral "true") Nothing (formatDrop id' retstm)]))
+        return (Match patterns Nothing (Case pred [ Match (PatVal $ AtomicLiteral "true") Nothing (formatReceive id' $ apply $ reverse stms')
+                                                  , Match (PatVal $ AtomicLiteral "false") Nothing (formatDrop id' retstm)]))
 
   , vDeclAssignF = \id _ -> id
   , vDeclF = \id -> id
@@ -156,7 +153,9 @@ refinementAlgebra = RebecaAlgebra {
         cs' <- cs
         elseifs' <- sequence elseifs
         els' <- els
-        return (stm $ If [Match (PatE exp') Nothing cs'])
+        let true = Match (PatVal $ AtomicLiteral "true") Nothing cs'
+            false = foldr (\f x -> f x) els' elseifs'
+        return (stm $ Case exp' [true, false])
 
   , singleCompStmF = \stm -> stm >>= \stm' -> return (Call stm' params)
   , multCompStmF = \stms -> sequence stms >>= \stms' ->
@@ -174,10 +173,13 @@ refinementAlgebra = RebecaAlgebra {
   , elseifStmF = \exp cs -> do
         exp' <- exp
         cs' <- cs
-        return (Match (PatVal $ AtomicLiteral "true") Nothing retstm)
+        let fn :: Match -> Match
+            fn m = Match (PatVal $ AtomicLiteral "false") Nothing (Case exp' [Match (PatVal $ AtomicLiteral "true") Nothing cs', m])
+        return fn
+        {-return (\false -> Match (PatVal $ AtomicLiteral "false") Nothing (Case exp' [Match (PatVal $ AtomicLiteral "true") Nothing cs']))-}
 
-  , emptyElseStmF = return (Match (PatVal $ AtomicLiteral "true") Nothing retstm)
-  , elseStmF = \cs -> cs >>= \cs' -> return (Match (PatVal $ AtomicLiteral "true") Nothing retstm)
+  , emptyElseStmF = return (Match (PatVal $ AtomicLiteral "false") Nothing retstm)
+  , elseStmF = \cs -> cs >>= \cs' -> return (Match (PatVal $ AtomicLiteral "false") Nothing cs')
 
   , lorF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return (InfixExp OpLOr exp0' exp')
   , landF = \exp0 exp -> exp0 >>= \exp0' -> exp >>= \exp' -> return (InfixExp OpLAnd exp0' exp')
@@ -240,19 +242,22 @@ refinementAlgebra = RebecaAlgebra {
   , mainF = \ins -> do
         ins' <- sequence ins
         envs <- getEnvVars
-        let spawns = foldr1 Seq (map fst ins')
+        let env = Assign (PatVar "Env") (Apply (ModExp "dict" "from_list") [ExpL $ map (\e -> ExpT [ExpVal $ AtomicLiteral e, ExpVar e]) envs])
+            spawns = foldr1 Seq (map fst ins')
             links = foldr1 Seq (map (fst . snd) ins')
             initials = foldr1 Seq (map (snd . snd) ins')
-        return (Function "main" (map PatVar envs) (Seq spawns (Seq links initials)))
+        return (Function "main" (map PatVar envs) (Seq env (Seq spawns (Seq links initials))))
 
   , instanceDeclF = \tvd vds exps -> do
         tvd' <- tvd
         vds' <- sequence vds
         exps' <- sequence exps
         kr <- getKnownRebecs
-        let spawn = Assign (PatVar (snd tvd')) (Call (ExpVal $ AtomicLiteral "spawn") (FunAnon [] (Apply (ExpVal $ AtomicLiteral $ snd tvd') [])))
-            link = Send (ExpVar (snd tvd')) (ExpT (map ExpVar vds'))
-            initial = Apply (ModExp "rebeca" "send") [ExpVar (snd tvd'), ExpVal $ AtomicLiteral "initial"]
+        let rebecName = snd tvd'
+            fn = FunAnon [] (Apply (ExpVal $ AtomicLiteral $ snd tvd') [ExpVar "Env", ExpVal $ AtomicLiteral (rebecName)])
+            spawn = Assign (PatVar (rebecName)) (Call (ExpVal $ AtomicLiteral "spawn") fn)
+            link = Send (ExpVar (rebecName)) (ExpT (map ExpVar vds'))
+            initial = Apply (ModExp "rebeca" "send") [ExpVar (rebecName), ExpVal $ AtomicLiteral "initial"]
         return (spawn,(link,initial))
 }
 
