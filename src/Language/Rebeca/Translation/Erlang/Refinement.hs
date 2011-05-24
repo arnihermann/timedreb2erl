@@ -44,7 +44,6 @@ refinementAlgebra = RebecaAlgebra {
         rcs' <- sequence rcs
         mai' <- mai
         moduleName <- ask
-        {-let moduleName = "test"-}
         return (Program (Module moduleName) [Export ["main/" ++ (show $ length envs')]] [] [Define "RT_FACTOR" (NumberLiteral 1000)] (concat rcs' ++ [mai']))
 
   , envVarF = \tp -> tp
