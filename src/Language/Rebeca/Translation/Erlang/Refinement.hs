@@ -1,5 +1,6 @@
 module Language.Rebeca.Translation.Erlang.Refinement where
 
+import Control.Monad.Reader
 import Control.Monad.State
 import Data.Maybe (fromMaybe)
 
@@ -13,24 +14,21 @@ type KnownRebecs = [String]
 type StateVars = [String]
 type LocalVars = [String]
 
+type CompilerConf = String -- the module name
 type CompilerState = State (EnvVars, KnownRebecs, StateVars, LocalVars)
 
 initialState = ([], [], [], [])
 
-setEnvVars names = get >>= \(_, kr, sv, lv) -> put (names, kr, sv, lv)
-setKnownRebecs names = get >>= \(env, _, sv, lv) -> put (env, names, sv, lv)
-setStateVars names = get >>= \(env, kr, _, lv) -> put (env, kr, names, lv)
-{-setLocalVars names = get >>= \(env, kr, sv, _) -> put (env, kr, sv, names)-}
-addLocalVar name = get >>= \(env, kr, sv, lv) -> put (env, kr, sv, name:lv)
+setEnvVars names = lift get >>= \(_, kr, sv, lv) -> put (names, kr, sv, lv)
+setKnownRebecs names = lift get >>= \(env, _, sv, lv) -> put (env, names, sv, lv)
+setStateVars names = lift get >>= \(env, kr, _, lv) -> put (env, kr, names, lv)
+addLocalVar name = lift get >>= \(env, kr, sv, lv) -> put (env, kr, sv, name:lv)
 
 
-getEnvVars = State $ \s@(env, kr, sv, lv) -> (env, s)
-getKnownRebecs = State $ \s@(env, kr, sv, lv) -> (kr, s)
-getStateVars = State $ \s@(env, kr, sv, lv) -> (sv, s)
-getLocalVars = State $ \s@(env, kr, sv, lv) -> (lv, s)
-
-{-resetState :: CompilerState ()-}
-{-resetState = State $ \_ -> ((), initialState)-}
+getEnvVars = lift get >>= \(env, _, _, _) -> return env
+getKnownRebecs = lift get >>= \(_, kr, _, _) -> return kr
+getStateVars = lift get >>= \(_, _, sv, _) -> return sv
+getLocalVars = lift get >>= \(_, _, _, lv) -> return lv
 
 defaultVal "int" = "0"
 defaultVal "time" = "0"
@@ -45,7 +43,9 @@ refinementAlgebra = RebecaAlgebra {
         setEnvVars envs'
         rcs' <- sequence rcs
         mai' <- mai
-        return (Program (Module "test") [Export ["main/" ++ (show $ length envs')]] [] [Define "RT_FACTOR" (NumberLiteral 1000)] (concat rcs' ++ [mai']))
+        moduleName <- ask
+        {-let moduleName = "test"-}
+        return (Program (Module moduleName) [Export ["main/" ++ (show $ length envs')]] [] [Define "RT_FACTOR" (NumberLiteral 1000)] (concat rcs' ++ [mai']))
 
   , envVarF = \tp -> tp
 
@@ -264,9 +264,10 @@ stm = FunAnon [PatT [PatVar "StateVars", PatVar "LocalVars"]]
 apply = foldr Call params
 retstm = ExpT [ExpVar "StateVars", ExpVar "LocalVars"]
 
-run :: R.Model -> CompilerState Program
+run :: R.Model -> ReaderT CompilerConf CompilerState Program
 run model = fold refinementAlgebra model
 
-translateRefinement :: R.Model -> Program
-translateRefinement model = evalState (run model) initialState
+translateRefinement :: String -> R.Model -> Program
+translateRefinement modelName model = evalState (runReaderT (run model) modelName) initialState
+
 

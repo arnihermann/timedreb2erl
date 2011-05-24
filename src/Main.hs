@@ -99,15 +99,15 @@ main :: IO ()
 main = do
     Params{..} <- cmdArgsRun params
     mod <- fromFile modelFile
-    let simplepro = Sim.simplifyAssignment mod
-        statevars = V.stateVarNames simplepro
-        knownrebecs = V.knownRebecNames simplepro
-        localvars = V.localVarNames simplepro
-        pro = R.translateRefinement simplepro
-    putStrLn ("Statevars: " ++ (show statevars))
-    putStrLn ("Knownrebecs: " ++ (show knownrebecs))
-    putStrLn ("Localvars: " ++ (show localvars))
-    putStrLn "Model:"
+    let moduleName = dropExtension modelFile
+        simplepro = Sim.simplifyAssignment mod
+        {-statevars = V.stateVarNames simplepro-}
+        {-knownrebecs = V.knownRebecNames simplepro-}
+        {-localvars = V.localVarNames simplepro-}
+        pro = R.translateRefinement moduleName simplepro
+    {-putStrLn ("Statevars: " ++ (show statevars))-}
+    {-putStrLn ("Knownrebecs: " ++ (show knownrebecs))-}
+    {-putStrLn ("Localvars: " ++ (show localvars))-}
     putStrLn $ P.renderProgram pro
 
     {-let Just gen = lookup generator generators-}

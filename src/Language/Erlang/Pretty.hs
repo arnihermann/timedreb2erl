@@ -85,7 +85,7 @@ expr (ExpVar name) = text $ firstUpper name
 func (Function name formals exp) = text (firstLower name) <> (parens $ commaSep $ map pattern formals) <+> text "->" $+$ inBlock [expr exp]
 
 attr (Module name) = text "-module" <> (parens $ text (firstLower name))
-attr (Export names) = text "-export" <> (parens $ commaSep (map text names))
+attr (Export names) = text "-export" <> (parens $ brackets $ commaSep (map text names))
 attr (Import name) = text "-import" <> (parens $ doubleQuotes $ text name)
 attr (Define name value) = text "-define" <> (parens $ text name <> comma <+> val value)
 
