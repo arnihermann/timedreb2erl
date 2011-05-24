@@ -9,7 +9,7 @@ import qualified Language.Rebeca.Absrebeca as R
 import Language.Rebeca.Algebra
 import Language.Rebeca.Fold
 
-type EnvVars = [String]
+type EnvVars = [(String, String)]
 type KnownRebecs = [String]
 type StateVars = [String]
 type LocalVars = [String]
@@ -35,6 +35,13 @@ defaultVal "time" = "0"
 defaultVal "boolean" = "false"
 defaultVal s = error ("no default value for " ++ s)
 
+convertType "int" = Just "list_to_integer"
+convertType _ = Nothing
+
+cast :: Exp -> String -> Exp
+cast val tn | tn == "int" || tn == "time" = Apply (ExpVal $ AtomicLiteral "list_to_atom") [val]
+            | otherwise = val
+
 refinementAlgebra = RebecaAlgebra {
     identF = \id -> return id
 
@@ -44,7 +51,7 @@ refinementAlgebra = RebecaAlgebra {
         rcs' <- sequence rcs
         mai' <- mai
         moduleName <- ask
-        return (Program (Module moduleName) [Export ["main/" ++ (show $ length envs')]] [] [] (concat rcs' ++ [mai']))
+        return (Program (Module moduleName) [Export ["main/1"]] [] [] (concat rcs' ++ [mai']))
 
   , envVarF = \tp -> tp
 
@@ -82,7 +89,7 @@ refinementAlgebra = RebecaAlgebra {
   , msgSrvInitF = \tps stms -> do
         tps' <- sequence tps
         stms' <- sequence stms
-        let patterns = PatT [PatT [PatVar "Sender", PatVar "TT", PatVar "DL"], PatVal $ AtomicLiteral "initial", PatT (map PatVar tps')]
+        let patterns = PatT [PatT [PatVar "Sender", PatVar "TT", PatVar "DL"], PatVal $ AtomicLiteral "initial", PatT (map (PatVar . snd) tps')]
             pred = InfixExp OpLOr (InfixExp OpEq (ExpVar "DL") (ExpVal $ AtomicLiteral "inf")) (InfixExp OpLEq (Apply (ModExp "rebeca" "now") []) (ExpVar "DL"))
         return (Match patterns Nothing (Case pred [ Match (PatVal $ AtomicLiteral "true") Nothing (formatReceive "initial" $ apply $ reverse stms')
                                                   , Match (PatVal $ AtomicLiteral "false") Nothing (formatDrop "initial" retstm)]))
@@ -91,7 +98,7 @@ refinementAlgebra = RebecaAlgebra {
         id' <- id
         tps' <- sequence tps
         stms' <- sequence stms
-        let patterns = PatT [PatT [PatVar "Sender", PatVar "TT", PatVar "DL"], PatVal $ AtomicLiteral id', PatT (map PatVar tps')]
+        let patterns = PatT [PatT [PatVar "Sender", PatVar "TT", PatVar "DL"], PatVal $ AtomicLiteral id', PatT (map (PatVar . snd) tps')]
             pred = InfixExp OpLOr (InfixExp OpEq (ExpVar "DL") (ExpVal $ AtomicLiteral "inf")) (InfixExp OpLEq (Apply (ModExp "rebeca" "now") []) (ExpVar "DL"))
         return (Match patterns Nothing (Case pred [ Match (PatVal $ AtomicLiteral "true") Nothing (formatReceive id' $ apply $ reverse stms')
                                                   , Match (PatVal $ AtomicLiteral "false") Nothing (formatDrop id' retstm)]))
@@ -108,7 +115,7 @@ refinementAlgebra = RebecaAlgebra {
         id' <- id
         return (defaultVal tn', id')
 
-  , typedParameterF = \_ id -> id
+  , typedParameterF = \tn id -> tn >>= \tn' -> id >>= \id' -> return (tn', id')
 
   , basicTypeIntF = return "int"
   , basicTypeTimeF = return "time"
@@ -218,7 +225,7 @@ refinementAlgebra = RebecaAlgebra {
                          then return (Apply (ModExp "dict" "fetch") [ExpVal $ AtomicLiteral id, ExpVar "KnownRebecs"])
                          else if id `elem` lv
                               then return (Apply (ModExp "dict" "fetch") [ExpVal $ AtomicLiteral id, ExpVar "LocalVars"])
-                              else if id `elem` sv
+                              else if id `elem` (map snd env)
                                    then return (Apply (ModExp "dict" "fetch") [ExpVal $ AtomicLiteral id, ExpVar "Env"])
                                    else return (ExpVar id) -- TODO: not safe, needs to lookup from formal parameters of method
             _ -> error "no variable or functionality not implemented"
@@ -242,11 +249,11 @@ refinementAlgebra = RebecaAlgebra {
   , mainF = \ins -> do
         ins' <- sequence ins
         envs <- getEnvVars
-        let env = Assign (PatVar "Env") (Apply (ModExp "dict" "from_list") [ExpL $ map (\e -> ExpT [ExpVal $ AtomicLiteral e, ExpVar e]) envs])
+        let env = Assign (PatVar "Env") (Apply (ModExp "dict" "from_list") [ExpL $ map (\e -> ExpT [ExpVal $ AtomicLiteral (snd e), cast (ExpVar (snd e)) (fst e)]) envs])
             spawns = foldr1 Seq (map fst ins')
             links = foldr1 Seq (map (fst . snd) ins')
             initials = foldr1 Seq (map (snd . snd) ins')
-        return (Function "main" (map PatVar envs) (Seq env (Seq spawns (Seq links initials))))
+        return (Function "main" [PatL $ map (PatVar . snd) envs] (Seq env (Seq spawns (Seq links initials))))
 
   , instanceDeclF = \tvd vds exps -> do
         tvd' <- tvd
@@ -254,7 +261,7 @@ refinementAlgebra = RebecaAlgebra {
         exps' <- sequence exps
         kr <- getKnownRebecs
         let rebecName = snd tvd'
-            fn = FunAnon [] (Apply (ExpVal $ AtomicLiteral $ snd tvd') [ExpVar "Env", ExpVal $ AtomicLiteral (rebecName)])
+            fn = FunAnon [] (Apply (ExpVal $ AtomicLiteral $ snd tvd') [ExpVar "Env", Apply (ExpVal $ AtomicLiteral "list_to_atom") [ExpVal $ StringLiteral (rebecName)]])
             spawn = Assign (PatVar (rebecName)) (Call (ExpVal $ AtomicLiteral "spawn") fn)
             link = Send (ExpVar (rebecName)) (ExpT (map ExpVar vds'))
             initial = Apply (ModExp "rebeca" "send") [ExpVar (rebecName), ExpVal $ AtomicLiteral "initial"]
