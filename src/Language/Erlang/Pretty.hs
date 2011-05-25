@@ -28,6 +28,9 @@ inBlock1 = nest 2
 commaSep :: [Doc] -> Doc
 commaSep docs = hcat (punctuate (comma <> space) docs)
 
+pipeSep :: [Doc] -> Doc
+pipeSep docs = hcat (punctuate (space <> text "|" <> space) docs)
+
 val (AtomicLiteral s) = text (firstLower s)
 val (StringLiteral s) = doubleQuotes (text s)
 val (NumberLiteral i) = text (show i)
@@ -35,7 +38,7 @@ val (ProcessLiteral s) = text (firstUpper s)
 
 pattern (PatVar s) = text (firstUpper s)
 pattern (PatT ps) = braces (commaSep $ map pattern ps)
-pattern (PatL ps) = brackets (commaSep $ map pattern ps)
+pattern (PatL ps) = brackets (pipeSep $ map pattern ps)
 pattern (PatVal v) = val v
 
 infop op = text $ case op of
