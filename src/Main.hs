@@ -41,7 +41,7 @@ fromFile :: FilePath -> IO Model
 fromFile f = fromString <$> readFile f
   where
     fromString s = let ts = myLexer s in case pModel ts of
-        Bad _ -> error $ "Could not parse model" ++ show ts
+        Bad err -> error $ "Could not parse model: " ++ show err
         Ok tree -> tree
 
 main :: IO ()
