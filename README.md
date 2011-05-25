@@ -27,20 +27,16 @@ Usage
 Given a timed rebeca model, we can generate Erlang source code for the model
 such that we can simulate it with McErlang.
 
+```
+timedreb2erl [OPTIONS] FILE
 
-> timedreb2erl [OPTIONS] FILE
-> 
-> Common flags:
-> 
->   -s --simulate
-> 
->   -m --monitor
-> 
->   -o --outputdir=FOLDER
-> 
->   -? --help              Display help message
-> 
->   -V --version           Print version information
+Common flags:
+  -s --simulate
+  -m --monitor
+  -o --outputdir=FOLDER
+  -? --help              Display help message
+  -V --version           Print version information
+```
 
 If no `outputdir` is specified the resulting Erlang code is printed to stdout.
 
