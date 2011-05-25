@@ -60,7 +60,7 @@ refinementAlgebra = RebecaAlgebra {
         sv' <- sv
         msi' <- msi
         ms' <- sequence ms
-        let initialsv = Assign (varP "StateVars") (Apply (moduleE "dict" "from_list") [listE (map (\(d, i) -> tupleE [atomE i, either atomE (\x -> x) d]) sv')])
+        let initialsv = Assign (varP "StateVars") (Apply (moduleE "dict" "from_list") [listE (map (\(_, i, d) -> tupleE [atomE i, either atomE (\x -> x) d]) sv')])
             initiallv = Assign (varP "LocalVars") (Apply (moduleE "dict" "new") [])
             recurs = Apply (atomE id') [varE "Env", varE "InstanceName", varE "KnownRebecs", varE "NewStateVars"]
         return ([ Function id' [varP "Env", varP "InstanceName"] $
@@ -76,13 +76,15 @@ refinementAlgebra = RebecaAlgebra {
   , noKnownRebecsF = return []
   , knownRebecsF = \tvds -> do
         tvds' <- sequence tvds
-        setKnownRebecs (map snd tvds')
-        return (map snd tvds')
+        let ids = map (\(_, id, _) -> id) tvds'
+        setKnownRebecs ids
+        return ids
 
   , noStateVarsF = return []
   , stateVarsF = \tvds -> do
         tvds' <- sequence tvds
-        setStateVars (map snd tvds')
+        let ids = map (\(_, id, _) -> id) tvds'
+        setStateVars ids 
         return tvds'
 
   , msgSrvInitF = \tps stms -> do
@@ -108,11 +110,12 @@ refinementAlgebra = RebecaAlgebra {
   , typedVarDeclF = \tn id -> do
         tn' <- tn
         id' <- id
-        return (Left (defaultVal tn'), id')
-  , typedVarDeclAssF = \_ id exp -> do
+        return (tn', id', Left (defaultVal tn'))
+  , typedVarDeclAssF = \tn id exp -> do
+        tn' <- tn
         id' <- id
         exp' <- exp
-        return (Right exp', id')
+        return (tn', id', Right exp')
 
   , typedParameterF = \tn id -> tn >>= \tn' -> id >>= \id' -> return (tn', id')
 
@@ -135,9 +138,7 @@ refinementAlgebra = RebecaAlgebra {
                 | otherwise = error $ "unknown variable name " ++ id'
         return (stm assignment)
   , localF = \tvd -> do
-        tvd' <- tvd
-        let d = fst tvd'
-            i = snd tvd'
+        (_, i, d) <- tvd
         addLocalVar i
         return (stm $ tupleE [varE "StateVars", Apply (moduleE "dict" "store") [atomE i, either atomE id d, varE "LocalVars"]])
   , callF = \id0 id exps aft dea -> do
@@ -184,7 +185,6 @@ refinementAlgebra = RebecaAlgebra {
         let fn :: Match -> Match
             fn m = Match (atomP "false") Nothing (Case exp' [Match (atomP "true") Nothing cs', m])
         return fn
-        {-return (\false -> Match (atomP "false") Nothing (Case exp' [Match (atomP "true") Nothing cs']))-}
 
   , emptyElseStmF = return (Match (atomP "false") Nothing retstm)
   , elseStmF = \cs -> cs >>= \cs' -> return (Match (atomP "false") Nothing cs')
@@ -261,8 +261,9 @@ refinementAlgebra = RebecaAlgebra {
         vds' <- sequence vds
         exps' <- sequence exps
         kr <- getKnownRebecs
-        let rebecName = snd tvd'
-            fn = FunAnon [] (Apply (atomE rebecName) [varE "Env", Apply (atomE "list_to_atom") [stringE (rebecName)]])
+        let (tn, id, de) = tvd'
+            rebecName = id 
+            fn = FunAnon [] (Apply (atomE tn) [varE "Env", Apply (atomE "list_to_atom") [stringE (rebecName)]]) -- TODO: rebecName is wrong
             spawn = Assign (varP (rebecName)) (Call (atomE "spawn") fn)
             link = Send (varE (rebecName)) (tupleE (map varE vds'))
             initial = Apply (moduleE "rebeca" "send") [varE (rebecName), atomE "initial"]

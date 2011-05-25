@@ -39,7 +39,7 @@ simulationAlgebra = refinementAlgebra {
         sv' <- sv
         msi' <- msi
         ms' <- sequence ms
-        let initialsv = Assign (varP "StateVars") (Apply (moduleE "dict" "from_list") [listE (map (\(d, i) -> tupleE [atomE i, either atomE (\x -> x) d]) sv')])
+        let initialsv = Assign (varP "StateVars") (Apply (moduleE "dict" "from_list") [listE (map (\(_, i, d) -> tupleE [atomE i, either atomE (\x -> x) d]) sv')])
             initiallv = Assign (varP "LocalVars") (Apply (moduleE "dict" "new") [])
             probeState = Apply (moduleE "mce_erl" "probe_state") [varE "InstanceName", varE "NewStateVars"]
             recurs = Apply (atomE id') [varE "Env", varE "InstanceName", varE "KnownRebecs", varE "NewStateVars"]

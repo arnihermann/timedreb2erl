@@ -1,7 +1,6 @@
 -module(monitor).
 -export([init/1, stateChange/3, monitorType/0]).
 
--include("sensornetwork.hrl").
 -include("$MCERLANG_HOME/src/include/stackEntry.hrl").
 
 -behaviour(mce_behav_monitor).
