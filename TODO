@@ -3,4 +3,7 @@
 + Add usage example after generation for executing McErlang to README
 + Add some type checking
 + Finish some program transformations before translation to Erlang (e.g. var opassign exp, x += 1 does not work)
++ Same local variable name in same rebec in different methods causes error
++ Error when known rebecs are empty
 + Write a translation for properties (some kind of predicates, ltl/ctl won't work for now)
++ Create builders for Erlang syntax (nice combinators for building Erlang syntax trees)

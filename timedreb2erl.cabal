@@ -2,7 +2,7 @@
 -- options, see
 -- http://www.haskell.org/cabal/release/cabal-latest/doc/users-guide/authors.html#pkg-descr.
 name:                timedreb2erl
-version:             0.1
+version:             0.2
 synopsis:            A program to translate Timed Rebeca models to Erlang.
 -- description:         
 license:             MIT
@@ -19,13 +19,13 @@ extra-source-files:  README,
 cabal-version:       >=1.6
 
 data-dir:            data
-data-files:          templates/simulation/*.erl
+data-files:          *.erl
 
 flag base4
     description: Choose the even newer, even smaller, split-up base package.
 
 executable timedreb2erl
-  ghc-options:         -Wall
+  --ghc-options:         -Wall
   hs-source-dirs:      src
   main-is:             Main.hs
   build-depends:       array,
@@ -35,21 +35,17 @@ executable timedreb2erl
                        haskell98,
                        HStringTemplate,
                        mtl,
+                       pretty,                       
                        split
   if flag(base4)
     build-depends:       base >= 4 && < 5, syb
   else
     build-depends:       base >= 2 && < 4
   
-  other-modules:       Generator.Discrete
-                       Generator.Simulation
-                       Generator.Spirit
-                       Generator.Types
-                       Language.Rebeca.Absrebeca
+  other-modules:       Language.Rebeca.Absrebeca
                        Language.Rebeca.ErrM
                        Language.Rebeca.Printrebeca
                        Language.Rebeca.Absrebeca
-                       TemplateHelper
   other-modules:       Language.Rebeca.Lexrebeca,
                        Language.Rebeca.Parrebeca,
                        Paths_timedreb2erl
