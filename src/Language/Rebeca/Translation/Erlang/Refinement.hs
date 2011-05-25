@@ -253,7 +253,7 @@ refinementAlgebra = RebecaAlgebra {
             spawns = foldr1 Seq (map fst ins')
             links = foldr1 Seq (map (fst . snd) ins')
             initials = foldr1 Seq (map (snd . snd) ins')
-        return (Function "main" [PatL $ (map (PatVar . snd) envs) ++ [PatVar "_"]] (Seq env (Seq spawns (Seq links initials))))
+        return (Function "main" [PatL $ (map (PatVar . snd) envs)] (Seq env (Seq spawns (Seq links initials))))
 
   , instanceDeclF = \tvd vds exps -> do
         tvd' <- tvd

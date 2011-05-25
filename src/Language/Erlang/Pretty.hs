@@ -38,7 +38,7 @@ val (ProcessLiteral s) = text (firstUpper s)
 
 pattern (PatVar s) = text (firstUpper s)
 pattern (PatT ps) = braces (commaSep $ map pattern ps)
-pattern (PatL ps) = brackets (pipeSep $ map pattern ps)
+pattern (PatL ps) = brackets (commaSep $ map pattern ps)
 pattern (PatVal v) = val v
 
 infop op = text $ case op of
