@@ -10,14 +10,6 @@ import Language.Rebeca.Fold
 import Language.Rebeca.Translation.Erlang.Refinement
 
 
-{-simulate(Args) ->-}
-  {-mce:start(#mce_opts{program={sensornetwork, main, Args},-}
-                      {-monitor={monitor, []},-}
-                      {-time_limit=1200,-}
-                      {-%chatter=all,-}
-                      {-algorithm={mce_alg_simulation, void}}).-}
-
-
 simulationAlgebra = refinementAlgebra {
     modelF = \envs rcs mai -> do
         envs' <- sequence envs
@@ -27,7 +19,7 @@ simulationAlgebra = refinementAlgebra {
         moduleName <- ask
         let sim = Function "simulate" [PatVar "Args"] (Apply (ModExp "mce" "start") [RecordCreate "mce_opts"
                     [ ("program", ExpT [ExpVal $ AtomicLiteral moduleName, ExpVal $ AtomicLiteral "main", ExpL [ExpVar "Args"]])
-                    , ("monitor", ExpT [ExpVal $ AtomicLiteral "monitor", ExpL []])
+                    {-, ("monitor", ExpT [ExpVal $ AtomicLiteral "monitor", ExpL []])-}
                     , ("time_limit", ExpVal $ NumberLiteral 1200)
                     , ("algorithm", ExpT [ExpVal $ AtomicLiteral "mce_alg_simulation", ExpVal $ AtomicLiteral "void"])
                     ]])
