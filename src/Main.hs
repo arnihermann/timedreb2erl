@@ -12,16 +12,16 @@ import Language.Rebeca.Parrebeca
 import Language.Rebeca.Absrebeca
 import Language.Rebeca.ErrM
 
-import Generator.Types
-import qualified Generator.Discrete as Dis
-import qualified Generator.Simulation as Sim
-import qualified Generator.Spirit as Spi
+{-import Generator.Types-}
+{-import qualified Generator.Discrete as Dis-}
+{-import qualified Generator.Simulation as Sim-}
+{-import qualified Generator.Spirit as Spi-}
 
 import qualified Language.Erlang.Pretty as P
 import qualified Language.Rebeca.Fold as F
 import qualified Language.Rebeca.Translation.Erlang.Refinement as R
+import qualified Language.Rebeca.Translation.Erlang.Simulation as S
 import qualified Language.Rebeca.Translation.Simplify as Sim
-{-import qualified Language.Rebeca.Translation.Erlang.Simulation as S-}
 {-import qualified Language.Rebeca.Translation.Monoid as M-}
 import qualified Language.Rebeca.Translation.Variables as V
 
@@ -32,41 +32,41 @@ fromFile f = fromString <$> readFile f
         Bad _ -> error $ "Could not parse model" ++ show ts
         Ok tree -> tree
 
-runErlang :: Generator -> FilePath -> FilePath -> IO ()
-runErlang gen dir f = do
-    model <- fromFile f
-    let (modelcode, _, _, _) = gen f model
-    putStrLn ("Writing erlang code to " ++ fileName)
-    writeFile fileName modelcode
-  where moduleName = dropExtension f
-        fileName = dir </> moduleName <.> "erl"
+{-runErlang :: Generator -> FilePath -> FilePath -> IO ()-}
+{-runErlang gen dir f = do-}
+    {-model <- fromFile f-}
+    {-let (modelcode, _, _, _) = gen f model-}
+    {-putStrLn ("Writing erlang code to " ++ fileName)-}
+    {-writeFile fileName modelcode-}
+  {-where moduleName = dropExtension f-}
+        {-fileName = dir </> moduleName <.> "erl"-}
 
-runRecords :: Generator -> FilePath -> FilePath -> IO ()
-runRecords gen dir f = do
-    model <- fromFile f
-    let (_, recordcode, _, _) = gen f model
-    putStrLn ("Writing records to " ++ fileName)
-    writeFile fileName recordcode
-  where moduleName = dropExtension f
-        fileName = dir </> moduleName <.> "hrl"
+{-runRecords :: Generator -> FilePath -> FilePath -> IO ()-}
+{-runRecords gen dir f = do-}
+    {-model <- fromFile f-}
+    {-let (_, recordcode, _, _) = gen f model-}
+    {-putStrLn ("Writing records to " ++ fileName)-}
+    {-writeFile fileName recordcode-}
+  {-where moduleName = dropExtension f-}
+        {-fileName = dir </> moduleName <.> "hrl"-}
 
-runMonitor :: Generator -> FilePath -> FilePath -> IO ()
-runMonitor gen dir f = do
-    model <- fromFile f
-    let (_, _, monitorcode, _) = gen f model
-    putStrLn ("Writing monitor to " ++ fileName)
-    writeFile fileName monitorcode
-  where moduleName = dropExtension f
-        fileName = dir </> "monitor" <.> "erl"
+{-runMonitor :: Generator -> FilePath -> FilePath -> IO ()-}
+{-runMonitor gen dir f = do-}
+    {-model <- fromFile f-}
+    {-let (_, _, monitorcode, _) = gen f model-}
+    {-putStrLn ("Writing monitor to " ++ fileName)-}
+    {-writeFile fileName monitorcode-}
+  {-where moduleName = dropExtension f-}
+        {-fileName = dir </> "monitor" <.> "erl"-}
 
-runRun :: Generator -> FilePath -> FilePath -> IO ()
-runRun gen dir f = do
-    model <- fromFile f
-    let (_, _, _, runcode) = gen f model
-    putStrLn ("Writing run code to " ++ fileName)
-    writeFile fileName runcode
-  where moduleName = dropExtension f
-        fileName = dir </> "run" <.> "erl"
+{-runRun :: Generator -> FilePath -> FilePath -> IO ()-}
+{-runRun gen dir f = do-}
+    {-model <- fromFile f-}
+    {-let (_, _, _, runcode) = gen f model-}
+    {-putStrLn ("Writing run code to " ++ fileName)-}
+    {-writeFile fileName runcode-}
+  {-where moduleName = dropExtension f-}
+        {-fileName = dir </> "run" <.> "erl"-}
 
 
 data Params = Params
@@ -89,11 +89,10 @@ params = cmdArgsMode $ Params
     , outputDir = "." &= typ "FOLDER"
     } &= program "timedreb2erl" &= summary "Timed Rebeca to erlang translator"
 
-run :: FilePath -> FilePath -> Bool -> (FilePath -> FilePath -> IO ()) -> IO ()
-run dir file cond act = if cond then (act dir file) else return ()
+{-run :: FilePath -> FilePath -> Bool -> (FilePath -> FilePath -> IO ()) -> IO ()-}
+{-run dir file cond act = if cond then (act dir file) else return ()-}
 
-generators :: [(String, Generator)]
-generators = [("simulation", Sim.transModel), ("discrete", Dis.transModel), ("spirit", Spi.transModel)]
+generators = [("simulation", S.translateSimulation), ("refinement", R.translateRefinement)]
 
 main :: IO ()
 main = do
@@ -104,7 +103,7 @@ main = do
         {-statevars = V.stateVarNames simplepro-}
         {-knownrebecs = V.knownRebecNames simplepro-}
         {-localvars = V.localVarNames simplepro-}
-        pro = R.translateRefinement moduleName simplepro
+        pro = S.translateSimulation moduleName simplepro
     {-putStrLn ("Statevars: " ++ (show statevars))-}
     {-putStrLn ("Knownrebecs: " ++ (show knownrebecs))-}
     {-putStrLn ("Localvars: " ++ (show localvars))-}

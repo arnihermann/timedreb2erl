@@ -275,10 +275,10 @@ stm = FunAnon [PatT [PatVar "StateVars", PatVar "LocalVars"]]
 apply = foldr Call params
 retstm = ExpT [ExpVar "StateVars", ExpVar "LocalVars"]
 
-run :: R.Model -> ReaderT CompilerConf CompilerState Program
-run model = fold refinementAlgebra model
+runRefine :: R.Model -> ReaderT CompilerConf CompilerState Program
+runRefine model = fold refinementAlgebra model
 
 translateRefinement :: String -> R.Model -> Program
-translateRefinement modelName model = evalState (runReaderT (run model) modelName) initialState
+translateRefinement modelName model = evalState (runReaderT (runRefine model) modelName) initialState
 
 
