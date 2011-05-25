@@ -2,7 +2,7 @@
 -- options, see
 -- http://www.haskell.org/cabal/release/cabal-latest/doc/users-guide/authors.html#pkg-descr.
 name:                timedreb2erl
-version:             0.1
+version:             0.2
 synopsis:            A program to translate Timed Rebeca models to Erlang.
 -- description:         
 license:             MIT
