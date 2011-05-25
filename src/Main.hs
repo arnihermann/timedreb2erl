@@ -70,7 +70,8 @@ main = do
             getDataFileName "rebeca.erl" >>= readFile >>= writeFile erlRebecaLib
 
             if monitor
-                then do putStrLn $ "Writing monitor template code to " ++ erlMonitor
-                        getDataFileName "monitor.erl" >>= readFile >>= writeFile erlMonitor
+                then do
+                    putStrLn $ "Writing monitor template code to " ++ erlMonitor
+                    getDataFileName "monitor.erl" >>= readFile >>= writeFile erlMonitor
                 else return ()
 
