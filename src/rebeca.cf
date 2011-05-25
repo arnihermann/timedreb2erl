@@ -20,6 +20,7 @@ KnownRebecs.    KnownRebecs ::= "knownrebecs" "{" [TypedVarDecl] "}";
 NoStateVars.    StateVars ::= ;
 StateVars.      StateVars ::= "statevars" "{" [TypedVarDecl] "}";
 
+-- TODO: add NoMsgSrvInit
 MsgSrvInit.     MsgSrvInit ::= "msgsrv" "initial" "(" [TypedParameter] ")" "{" [Stm] "}";
 
 MsgSrv.         MsgSrv ::= "msgsrv" Ident "(" [TypedParameter] ")" "{" [Stm] "}";
