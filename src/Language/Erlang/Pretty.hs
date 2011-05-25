@@ -28,6 +28,9 @@ inBlock1 = nest 2
 commaSep :: [Doc] -> Doc
 commaSep docs = hcat (punctuate (comma <> space) docs)
 
+commaSepV :: [Doc] -> Doc
+commaSepV docs = vcat (punctuate (comma <> space) docs)
+
 pipeSep :: [Doc] -> Doc
 pipeSep docs = hcat (punctuate (space <> text "|" <> space) docs)
 
@@ -85,12 +88,13 @@ expr (ExpL exps) = brackets $ commaSep (map expr exps)
 expr (ExpVal v) = val v
 expr (ExpVar "self") = text "self" <> parens empty
 expr (ExpVar name) = text $ firstUpper name
+expr (RecordCreate name attrs) = text "#" <> text name <> braces (commaSepV $ map (\(k,v) -> text k <> text "=" <> expr v) attrs)
 
 func (Function name formals exp) = text (firstLower name) <> (parens $ commaSep $ map pattern formals) <+> text "->" $+$ inBlock [expr exp]
 
 attr (Module name) = text "-module" <> (parens $ text (firstLower name))
 attr (Export names) = text "-export" <> (parens $ brackets $ commaSep (map text names))
-attr (Import name) = text "-import" <> (parens $ doubleQuotes $ text name)
+attr (Import name) = text "-include" <> (parens $ doubleQuotes $ text name)
 attr (Define name value) = text "-define" <> (parens $ text name <> comma <+> val value)
 
 program (Program mod exp imp def fns) = vcat $ intersperse emptyLine [ attr mod <> dot
