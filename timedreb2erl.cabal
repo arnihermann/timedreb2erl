@@ -19,7 +19,7 @@ extra-source-files:  README,
 cabal-version:       >=1.6
 
 data-dir:            data
-data-files:          templates/simulation/*.erl
+data-files:          *.erl
 
 flag base4
     description: Choose the even newer, even smaller, split-up base package.
@@ -42,15 +42,10 @@ executable timedreb2erl
   else
     build-depends:       base >= 2 && < 4
   
-  other-modules:       Generator.Discrete
-                       Generator.Simulation
-                       Generator.Spirit
-                       Generator.Types
-                       Language.Rebeca.Absrebeca
+  other-modules:       Language.Rebeca.Absrebeca
                        Language.Rebeca.ErrM
                        Language.Rebeca.Printrebeca
                        Language.Rebeca.Absrebeca
-                       TemplateHelper
   other-modules:       Language.Rebeca.Lexrebeca,
                        Language.Rebeca.Parrebeca,
                        Paths_timedreb2erl
