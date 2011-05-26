@@ -15,6 +15,8 @@ import Language.Rebeca.Absrebeca
 import Language.Rebeca.ErrM
 
 import qualified Language.Erlang.Pretty as P
+import qualified Language.Erlang.Fold.Identity as I
+
 import qualified Language.Rebeca.Fold.Erlang.Refinement as R
 import qualified Language.Rebeca.Fold.Erlang.Simulation as S
 import qualified Language.Rebeca.Fold.Simplify as Sim
@@ -50,7 +52,7 @@ main = do
     let moduleName = (dropExtension . takeFileName) modelFile
         simplepro = Sim.simplifyAssignment mod
         translationFunction = if simulate then S.translateSimulation else R.translateRefinement
-        pro = translationFunction moduleName simplepro
+        pro = I.translateIdentity $ translationFunction moduleName simplepro
 
     case outputDir of
         Nothing -> putStrLn $ P.renderProgram pro

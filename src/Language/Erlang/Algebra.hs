@@ -1,4 +1,4 @@
-module Language.Erlang.Builder where
+module Language.Erlang.Algebra where
 
 import Language.Erlang.Syntax
 
@@ -18,31 +18,31 @@ data ErlangAlgebra
   , moduleF :: String -> at
   , exportF :: [String] -> at
   , importF :: String -> at
-  , defineF :: String -> bn -> at
+  , defineF :: String -> bv -> at
 
   , functionF :: String -> [pat] -> exp -> fn
 
   , atomicLiteralF :: String -> bv
-  , stringLiteralF :: String -> bf
+  , stringLiteralF :: String -> bv
   , numberLiteralF :: Integer -> bv
   , processLiteralF :: String -> bv
 
-  , opLT :: iop
-  , opLEq :: iop
-  , opGT :: iop
-  , opGEq :: iop
-  , opEq :: iop
-  , opNEq :: iop
-  , opLAnd :: iop
-  , opLOr :: iop
-  , opMul :: iop
-  , opDiv :: iop
-  , opMod :: iop
-  , opSub :: iop
-  , opBAnd :: iop
-  , opBXor :: iop
-  , opBOr :: iop
-  , opAdd :: iop
+  , opLTF :: iop
+  , opLEqF :: iop
+  , opGTF :: iop
+  , opGEqF :: iop
+  , opEqF :: iop
+  , opNEqF :: iop
+  , opLAndF :: iop
+  , opLOrF :: iop
+  , opMulF :: iop
+  , opDivF :: iop
+  , opModF :: iop
+  , opSubF :: iop
+  , opBAndF :: iop
+  , opBXorF :: iop
+  , opBOrF :: iop
+  , opAddF :: iop
 
   , infixExpF :: iop -> exp -> exp -> exp
   , modExpF :: String -> String -> exp

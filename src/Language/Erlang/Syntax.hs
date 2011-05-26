@@ -57,6 +57,7 @@ data Pattern = PatVar Name
     | PatVal BasicValue
   deriving (Eq,Ord,Show,Data,Typeable)
 
+-- TODO: guards are not used as of now, and data types might need reconsideration
 data Guard = GuardVal BasicValue
     | GuardVar Name
     | GuardCall Guard [Guard]

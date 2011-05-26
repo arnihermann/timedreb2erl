@@ -59,10 +59,10 @@ instance Fold (ErlangAlgebra pr at fn bv iop exp mat pat gua) Exp exp where
     fold f (ExpL exps) = expLF f (map (fold f) exps)
     fold f (ExpVal bv) = expValF f (fold f bv)
     fold f (ExpVar name) = expVarF f name
-    fold f (RecordCreate name attrs] = recordCreateF f name (map (\(k,v) -> (k, fold f v)) attrs)
+    fold f (RecordCreate name attrs) = recordCreateF f name (map (\(k,v) -> (k, fold f v)) attrs)
 
 instance Fold (ErlangAlgebra pr at fn bv iop exp mat pat gua) Match mat where
-    fold f (Match pat gua exp) = matchF f (fold f pat) (fold f gua) (fold f exp)
+    fold f (Match pat gua exp) = matchF f (fold f pat) (fmap (fold f) gua) (fold f exp)
 
 instance Fold (ErlangAlgebra pr at fn bv iop exp mat pat gua) Pattern pat where
     fold f (PatVar name) = patVarF f name
