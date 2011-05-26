@@ -1,4 +1,4 @@
-module Language.Rebeca.Translation.Erlang.Simulation where
+module Language.Rebeca.Fold.Erlang.Simulation where
 
 import Control.Monad.Reader
 import Control.Monad.State
@@ -9,7 +9,7 @@ import Language.Erlang.Syntax
 import qualified Language.Rebeca.Absrebeca as R
 import Language.Rebeca.Algebra
 import Language.Rebeca.Fold
-import Language.Rebeca.Translation.Erlang.Refinement
+import Language.Rebeca.Fold.Erlang.Refinement
 
 
 simulationAlgebra = refinementAlgebra {

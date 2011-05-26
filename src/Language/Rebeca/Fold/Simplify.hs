@@ -1,11 +1,11 @@
-module Language.Rebeca.Translation.Simplify where
+module Language.Rebeca.Fold.Simplify where
 
 import Language.Fold
 import Language.Rebeca.Absrebeca
 import Language.Rebeca.Algebra
 import Language.Rebeca.Fold
 
-import Language.Rebeca.Translation.Identity
+import Language.Rebeca.Fold.Identity
 
 simplifyAssignmentAlgebra = identityAlgebra {
    assF = \id aop exp -> case aop of

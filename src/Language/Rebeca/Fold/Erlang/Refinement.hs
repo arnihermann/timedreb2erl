@@ -1,4 +1,4 @@
-module Language.Rebeca.Translation.Erlang.Refinement where
+module Language.Rebeca.Fold.Erlang.Refinement where
 
 import Control.Monad.Reader
 import Control.Monad.State

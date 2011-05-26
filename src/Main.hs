@@ -15,11 +15,10 @@ import Language.Rebeca.Absrebeca
 import Language.Rebeca.ErrM
 
 import qualified Language.Erlang.Pretty as P
-import qualified Language.Rebeca.Fold as F
-import qualified Language.Rebeca.Translation.Erlang.Refinement as R
-import qualified Language.Rebeca.Translation.Erlang.Simulation as S
-import qualified Language.Rebeca.Translation.Simplify as Sim
-import qualified Language.Rebeca.Translation.Variables as V
+import qualified Language.Rebeca.Fold.Erlang.Refinement as R
+import qualified Language.Rebeca.Fold.Erlang.Simulation as S
+import qualified Language.Rebeca.Fold.Simplify as Sim
+import qualified Language.Rebeca.Fold.Variables as V
 
 
 data Params = Params

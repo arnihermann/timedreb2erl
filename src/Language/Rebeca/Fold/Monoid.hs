@@ -1,6 +1,6 @@
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
-module Language.Rebeca.Translation.Monoid where
+module Language.Rebeca.Fold.Monoid where
 
 import Data.Monoid
 
