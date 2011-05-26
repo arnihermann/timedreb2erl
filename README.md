@@ -31,8 +31,9 @@ such that we can simulate it with McErlang.
 timedreb2erl [OPTIONS] FILE
 
 Common flags:
-  -s --simulate
-  -m --monitor
+  -s --simulate        
+  -m --monitor         
+  -r --rtfactor=INT    
   -o --outputdir=FOLDER
   -? --help              Display help message
   -V --version           Print version information
@@ -42,5 +43,8 @@ If no `outputdir` is specified the resulting Erlang code is printed to stdout.
 
 The `simulate` flag outputs code that can be run with McErlang. If it is
 omitted, then refined Erlang code is outputted.
+
+The `rtfactor` flag specifies what time units are in the generated code (in
+milliseconds). Default 1000.
 
 The `monitor` flag has no effect unless `outputdir` is used.
