@@ -27,7 +27,7 @@ data BasicValue = AtomicLiteral String
   deriving (Eq,Ord,Show,Data,Typeable)
 
 data InfixOp = OpLT | OpLEq | OpGT | OpGEq | OpEq | OpNEq | OpLAnd | OpLOr 
-    | OpMul | OpDiv | OpMod  | OpSub | OpBAnd | OpBXor | OpBOr | OpAdd
+    | OpMul | OpDiv | OpMod | OpSub | OpBAnd | OpBXor | OpBOr | OpAdd
   deriving (Eq,Ord,Show,Data,Typeable)
 
 data Exp = InfixExp InfixOp Exp Exp
@@ -57,9 +57,8 @@ data Pattern = PatVar Name
     | PatVal BasicValue
   deriving (Eq,Ord,Show,Data,Typeable)
 
-data Guard = InfixGuard Guard Guard
-    | GuardVal BasicValue
-    | GuardVar Name 
+data Guard = GuardVal BasicValue
+    | GuardVar Name
     | GuardCall Guard [Guard]
     | GuardT [Guard] -- tuple
     | GuardL [Guard] -- list
