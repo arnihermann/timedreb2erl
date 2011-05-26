@@ -3,6 +3,7 @@ module Language.Rebeca.Translation.Erlang.Simulation where
 import Control.Monad.Reader
 import Control.Monad.State
 
+import Language.Fold
 import Language.Erlang.Builder
 import Language.Erlang.Syntax
 import qualified Language.Rebeca.Absrebeca as R

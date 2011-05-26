@@ -1,5 +1,6 @@
 module Language.Rebeca.Translation.Simplify where
 
+import Language.Fold
 import Language.Rebeca.Absrebeca
 import Language.Rebeca.Algebra
 import Language.Rebeca.Fold

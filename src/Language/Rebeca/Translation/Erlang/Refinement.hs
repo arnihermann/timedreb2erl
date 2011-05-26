@@ -5,6 +5,7 @@ import Control.Monad.State
 import Data.Either (either)
 import Data.Maybe (fromMaybe)
 
+import Language.Fold
 import Language.Erlang.Builder
 import Language.Erlang.Syntax
 import qualified Language.Rebeca.Absrebeca as R
