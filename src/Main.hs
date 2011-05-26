@@ -28,7 +28,7 @@ import Text.StringTemplate.GenericStandard ()
 data Params = Params
     { simulate :: Bool
     , monitor :: Bool
-    , rtfactor :: Integer
+    , timeunit :: Integer
     , modelFile :: String
     , outputDir :: Maybe FilePath
     } deriving (Data, Typeable, Show)
@@ -36,7 +36,7 @@ data Params = Params
 params = cmdArgsMode $ Params
     { simulate = False 
     , monitor = False
-    , rtfactor = 1000
+    , timeunit = 1000
     , modelFile = "" &= argPos 0 &= typ "FILE"
     , outputDir = Nothing &= typ "FOLDER"
     } &= program "timedreb2erl" &= summary "Timed Rebeca to erlang translator"
@@ -56,7 +56,7 @@ main = do
     let moduleName = (dropExtension . takeFileName) modelFile
         simplepro = Sim.simplifyAssignment mod
         translationFunction = if simulate then S.translateSimulation else R.translateRefinement
-        pro = T.fixTimedExp $ translationFunction moduleName rtfactor monitor simplepro
+        pro = T.fixTimedExp $ translationFunction moduleName timeunit monitor simplepro
 
     case outputDir of
         Nothing -> putStrLn $ P.renderProgram pro
@@ -76,7 +76,7 @@ main = do
                 filepath <- getDataFileName "rebeca.erl"
                 rebtemplate <- readFile filepath
                 let tpl = newSTMP rebtemplate
-                    reblib = render $ setAttribute "rtfactor" rtfactor tpl
+                    reblib = render $ setAttribute "rtfactor" timeunit tpl
                 writeFile erlRebecaLib reblib
 
             if monitor
