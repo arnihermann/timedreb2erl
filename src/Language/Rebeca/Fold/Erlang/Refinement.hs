@@ -12,26 +12,43 @@ import qualified Language.Rebeca.Absrebeca as R
 import Language.Rebeca.Algebra
 import Language.Rebeca.Fold
 
-type EnvVars = [(String, String)]
-type KnownRebecs = [String]
-type StateVars = [String]
-type LocalVars = [String]
-
-type CompilerConf = (String, Integer) -- the module name, rt factor
-type CompilerState = State (EnvVars, KnownRebecs, StateVars, LocalVars)
-
-initialState = ([], [], [], [])
-
-setEnvVars names = lift get >>= \(_, kr, sv, lv) -> put (names, kr, sv, lv)
-setKnownRebecs names = lift get >>= \(env, _, sv, lv) -> put (env, names, sv, lv)
-setStateVars names = lift get >>= \(env, kr, _, lv) -> put (env, kr, names, lv)
-addLocalVar name = lift get >>= \(env, kr, sv, lv) -> put (env, kr, sv, name:lv)
+data CompilerConf = CompilerConf {
+    moduleName :: String
+  , rtfactor :: Integer
+}
 
 
-getEnvVars = lift get >>= \(env, _, _, _) -> return env
-getKnownRebecs = lift get >>= \(_, kr, _, _) -> return kr
-getStateVars = lift get >>= \(_, _, sv, _) -> return sv
-getLocalVars = lift get >>= \(_, _, _, lv) -> return lv
+initialConf = CompilerConf {
+    moduleName = ""
+  , rtfactor = 0
+}
+
+data CompilerState = CompilerState {
+    env :: [(String, String)]
+  , kr :: [String]
+  , sv :: [String]
+  , lv :: [String]
+}
+
+initialState = CompilerState {
+    env = []
+  , kr = []
+  , sv = []
+  , lv = []
+}
+
+setEnvVars names = lift get >>= \rec -> put (rec { env = names })
+setKnownRebecs names = lift get >>= \rec -> put (rec { kr = names })
+setStateVars names = lift get >>= \rec -> put (rec { sv = names })
+setLocalVars names = lift get >>= \rec -> put (rec { lv = [] })
+addLocalVar name = lift get >>= \rec -> put (rec { lv = name : (lv rec) })
+
+getModuleName = ask >>= return . moduleName
+getRtFactor = ask >>= return . rtfactor
+getEnvVars = lift get >>= return . env
+getKnownRebecs = lift get >>= return . kr
+getStateVars = lift get >>= return . sv
+getLocalVars = lift get >>= return . lv
 
 defaultVal "int" = "0"
 defaultVal "time" = "0"
@@ -50,45 +67,43 @@ refinementAlgebra = RebecaAlgebra {
         setEnvVars envs'
         rcs' <- sequence rcs
         mai' <- mai
-        (moduleName, rtfactor) <- ask
+        moduleName <- getModuleName
+        rtfactor <- getRtFactor
         return (Program (Module moduleName) [Export ["main/1"]] [] [Define "RT_FACTOR" (num rtfactor)] (concat rcs' ++ [mai']))
 
   , envVarF = \tp -> tp
 
   , reactiveClassF = \id _ kr sv msi ms -> do
+        setKnownRebecs []
+        setStateVars []
         id' <- id
         kr' <- kr
+        setKnownRebecs kr'
         sv' <- sv
+        setStateVars (map (\(_, id, _) -> id) sv')
         msi' <- msi
         ms' <- sequence ms
         let initialsv = Assign (varP "StateVars") (Apply (moduleE "dict" "from_list") [listE (map (\(_, i, d) -> tupleE [atomE i, either atomE (\x -> x) d]) sv')])
             initiallv = Assign (varP "LocalVars") (Apply (moduleE "dict" "new") [])
             recurs = Apply (atomE id') [varE "Env", varE "InstanceName", varE "KnownRebecs", varE "NewStateVars"]
         return ([ Function id' [varP "Env", varP "InstanceName"] $
-              Receive [ Match (tupleP (map varP kr')) Nothing $
-                Apply (atomE id') [ varE "Env", varE "InstanceName"
-                                  , Apply (moduleE "dict" "from_list") [listE (map (\k -> tupleE [atomE k, varE k]) kr')]
-                                  ]]
-            , Function id' [varP "Env", varP "InstanceName", varP "KnownRebecs"] $
-                Seq (Seq initialsv (Seq initiallv (Assign (tupleP [varP "NewStateVars", varP "_"]) (Receive [msi'])))) recurs
-            , Function id' [varP "Env", varP "InstanceName", varP "KnownRebecs", varP "StateVars"] $
-                Seq (Seq initiallv (Assign (tupleP [varP "NewStateVars", varP "_"]) (Receive ms'))) recurs
-            ])
+                      Receive [ Match (tupleP (map varP kr')) Nothing $ Apply (atomE id') [ varE "Env", varE "InstanceName"
+                              , Apply (moduleE "dict" "from_list") [listE (map (\k -> tupleE [atomE k, varE k]) kr')]
+                              ]]
+                , Function id' [varP "Env", varP "InstanceName", varP "KnownRebecs"] $
+                    Seq (Seq initialsv (Seq initiallv (Assign (tupleP [varP "NewStateVars", varP "_"]) (Receive [msi'])))) recurs
+                , Function id' [varP "Env", varP "InstanceName", varP "KnownRebecs", varP "StateVars"] $
+                    Seq (Seq initiallv (Assign (tupleP [varP "NewStateVars", varP "_"]) (Receive ms'))) recurs])
   , noKnownRebecsF = return []
   , knownRebecsF = \tvds -> do
         tvds' <- sequence tvds
-        let ids = map (\(_, id, _) -> id) tvds'
-        setKnownRebecs ids
-        return ids
+        return (map (\(_, id, _) -> id) tvds')
 
   , noStateVarsF = return []
-  , stateVarsF = \tvds -> do
-        tvds' <- sequence tvds
-        let ids = map (\(_, id, _) -> id) tvds'
-        setStateVars ids 
-        return tvds'
+  , stateVarsF = \tvds -> sequence tvds >>= return
 
   , msgSrvInitF = \tps stms -> do
+        setLocalVars []
         tps' <- sequence tps
         stms' <- sequence stms
         let patterns = tupleP [tupleP [varP "Sender", varP "TT", varP "DL"], atomP "initial", tupleP (map (varP . snd) tps')]
@@ -97,6 +112,7 @@ refinementAlgebra = RebecaAlgebra {
                                                   , Match (atomP "false") Nothing (formatDrop "initial" retstm)]))
 
   , msgSrvF = \id tps stms -> do
+        setLocalVars []
         id' <- id
         tps' <- sequence tps
         stms' <- sequence stms
@@ -278,10 +294,10 @@ stm = FunAnon [tupleP [varP "StateVars", varP "LocalVars"]]
 apply = foldr Call params
 retstm = tupleE [varE "StateVars", varE "LocalVars"]
 
-runRefine :: R.Model -> ReaderT CompilerConf CompilerState Program
+runRefine :: R.Model -> ReaderT CompilerConf (State CompilerState) Program
 runRefine model = fold refinementAlgebra model
 
 translateRefinement :: String -> Integer -> R.Model -> Program
-translateRefinement modelName rtfactor model = evalState (runReaderT (runRefine model) (modelName, rtfactor)) initialState
+translateRefinement modelName rtfactor model = evalState (runReaderT (runRefine model) (initialConf {moduleName = modelName, rtfactor = rtfactor })) initialState
 
 

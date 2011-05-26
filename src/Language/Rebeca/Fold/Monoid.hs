@@ -12,7 +12,7 @@ import Language.Rebeca.Fold
 type Unify a = RebecaAlgebra a a a a a a a a a a a a a a a a a a a a a a a a a
 
 monoidAlgebra = RebecaAlgebra {
-    identF = \s -> [s]
+    identF = \s -> mempty
 
   , modelF = \envs rcs mai -> (mconcat envs) `mappend` (mconcat rcs)
 

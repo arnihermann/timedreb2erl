@@ -33,19 +33,6 @@ addRt exp rt | not rt = Coercion (InfixExp OpMul rtfactor exp)
   where
     rtfactor = ExpVal $ AtomicLiteral "?RT_FACTOR"
 
-{-includesTime = everything (||) (False `mkQ` timeExp)-}
-  {-where-}
-    {-timeExp (Apply (ModExp "rebeca" "now") []) = True-}
-    {-timeExp _ = False-}
-
-{-addRt exp rt | not rt = everywhere (mkT multRt) exp-}
-             {-| otherwise = exp-}
-  {-where-}
-    {-multRt e@(ExpVal bv) = InfixExp OpMul rtfactor e-}
-    {-multRt e@(ExpVar name) = InfixExp OpMul rtfactor e-}
-    {-multRt exp = exp-}
-    {-rtfactor = ExpVal $ AtomicLiteral "?RT_FACTOR"-}
-
 fixTimedExp :: Program -> Program
 fixTimedExp = fold timedExpAlgebra
 

@@ -18,7 +18,8 @@ simulationAlgebra = refinementAlgebra {
         setEnvVars envs'
         rcs' <- sequence rcs
         mai' <- mai
-        (moduleName, rtfactor) <- ask
+        moduleName <- getModuleName
+        rtfactor <- getRtFactor
         let sim = Function "simulate" [varP "Args"] (Apply (moduleE "mce" "start") [RecordCreate "mce_opts"
                     [ ("program", tupleE [atomE moduleName, atomE "main", listE [varE "Args"]])
                     {-, ("monitor", tupleE [atomE "monitor", listE []])-}
@@ -35,9 +36,13 @@ simulationAlgebra = refinementAlgebra {
             (concat rcs' ++ [mai', sim]))
     
   , reactiveClassF = \id _ kr sv msi ms -> do
+        setKnownRebecs []
+        setStateVars []
         id' <- id
         kr' <- kr
+        setKnownRebecs kr'
         sv' <- sv
+        setStateVars (map (\(_, id, _) -> id) sv')
         msi' <- msi
         ms' <- sequence ms
         let initialsv = Assign (varP "StateVars") (Apply (moduleE "dict" "from_list") [listE (map (\(_, i, d) -> tupleE [atomE i, either atomE (\x -> x) d]) sv')])
@@ -56,6 +61,7 @@ simulationAlgebra = refinementAlgebra {
             ])
 
   , msgSrvF = \id tps stms -> do
+        setLocalVars []
         id' <- id
         tps' <- sequence tps
         stms' <- sequence stms
@@ -66,9 +72,9 @@ simulationAlgebra = refinementAlgebra {
                                                   , Match (atomP "false") Nothing (Seq probe (formatDrop id' retstm))]))
 }
 
-runSimulate :: R.Model -> ReaderT CompilerConf CompilerState Program
+runSimulate :: R.Model -> ReaderT CompilerConf (State CompilerState) Program
 runSimulate model = fold simulationAlgebra model
 
 translateSimulation :: String -> Integer -> R.Model -> Program
-translateSimulation modelName rtfactor model = evalState (runReaderT (runSimulate model) (modelName, rtfactor)) initialState
+translateSimulation modelName rtfactor model = evalState (runReaderT (runSimulate model) (initialConf {moduleName = modelName, rtfactor = rtfactor })) initialState
 
