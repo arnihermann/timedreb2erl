@@ -6,7 +6,7 @@
 -export([sendafter/3, sendafter/4, sendafter/5]).
 -export([nondet/1]).
 
--define(RT_FACTOR, 1000).
+-define(RT_FACTOR, $rtfactor$).
 
 delay(T) ->
   receive

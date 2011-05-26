@@ -1,9 +1,10 @@
 {-# LANGUAGE NoMonomorphismRestriction #-}
 
-module Language.Rebeca.Translation.Monoid where
+module Language.Rebeca.Fold.Monoid where
 
 import Data.Monoid
 
+import Language.Fold
 import Language.Rebeca.Absrebeca
 import Language.Rebeca.Algebra
 import Language.Rebeca.Fold
@@ -11,7 +12,7 @@ import Language.Rebeca.Fold
 type Unify a = RebecaAlgebra a a a a a a a a a a a a a a a a a a a a a a a a a
 
 monoidAlgebra = RebecaAlgebra {
-    identF = \s -> [s]
+    identF = \s -> mempty
 
   , modelF = \envs rcs mai -> (mconcat envs) `mappend` (mconcat rcs)
 

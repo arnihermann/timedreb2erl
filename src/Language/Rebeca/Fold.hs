@@ -1,12 +1,10 @@
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
 
 module Language.Rebeca.Fold where
 
+import Language.Fold
 import Language.Rebeca.Absrebeca
 import Language.Rebeca.Algebra
-
-class Fold f t r | f t -> r where
-    fold :: f -> t -> r
 
 instance Fold (RebecaAlgebra id mod env rc kr sv msi ms vd tvd tp bt tn stm cs aft dea eli el exp con uop aop mai ins) Ident id where
     fold f (Ident s) = identF f s

@@ -27,17 +27,24 @@ Usage
 Given a timed rebeca model, we can generate Erlang source code for the model
 such that we can simulate it with McErlang.
 
-> timedreb2erl --genmodel --genrecords --genrun --genmonitor --outputdir=out simulation FILE
+```
+timedreb2erl [OPTIONS] FILE
 
-The `--genmodel` flag creates an Erlang file which corresponds to the model in
-Timed Rebeca.
+Common flags:
+  -s --simulate        
+  -m --monitor         
+  -r --rtfactor=INT    
+  -o --outputdir=FOLDER
+  -? --help              Display help message
+  -V --version           Print version information
+```
 
-The `--genrecords` flag creates an Erlang header file which contains the
-records that are used by the model (known rebecs, state variables, local
-variables).
+If no `outputdir` is specified the resulting Erlang code is printed to stdout.
 
-The `--genrun` flag creates a 'run' file which can be used by McErlang to
-simulate the model.
+The `simulate` flag outputs code that can be run with McErlang. If it is
+omitted, then refined Erlang code is outputted.
 
-The `--genmonitor` flag creates a template monitor file for you, the developer,
-to edit such that McErlang fails on illegal state.
+The `rtfactor` flag specifies what time units are in the generated code (in
+milliseconds). Default 1000.
+
+The `monitor` flag has no effect unless `outputdir` is used.

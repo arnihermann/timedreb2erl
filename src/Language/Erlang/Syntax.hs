@@ -27,7 +27,7 @@ data BasicValue = AtomicLiteral String
   deriving (Eq,Ord,Show,Data,Typeable)
 
 data InfixOp = OpLT | OpLEq | OpGT | OpGEq | OpEq | OpNEq | OpLAnd | OpLOr 
-    | OpMul | OpDiv | OpMod  | OpSub | OpBAnd | OpBXor | OpBOr | OpAdd
+    | OpMul | OpDiv | OpMod | OpSub | OpBAnd | OpBXor | OpBOr | OpAdd
   deriving (Eq,Ord,Show,Data,Typeable)
 
 data Exp = InfixExp InfixOp Exp Exp
@@ -46,6 +46,7 @@ data Exp = InfixExp InfixOp Exp Exp
     | ExpVal BasicValue -- value
     | ExpVar Name -- variable
     | RecordCreate Name [(Name, Exp)]
+    | Coercion Exp -- parens
   deriving (Eq,Ord,Show,Data,Typeable)
 
 data Match = Match Pattern (Maybe Guard) Exp
@@ -57,9 +58,9 @@ data Pattern = PatVar Name
     | PatVal BasicValue
   deriving (Eq,Ord,Show,Data,Typeable)
 
-data Guard = InfixGuard Guard Guard
-    | GuardVal BasicValue
-    | GuardVar Name 
+-- TODO: guards are not used as of now, and data types might need reconsideration
+data Guard = GuardVal BasicValue
+    | GuardVar Name
     | GuardCall Guard [Guard]
     | GuardT [Guard] -- tuple
     | GuardL [Guard] -- list
