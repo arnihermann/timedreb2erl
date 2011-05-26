@@ -17,7 +17,7 @@ type KnownRebecs = [String]
 type StateVars = [String]
 type LocalVars = [String]
 
-type CompilerConf = String -- the module name
+type CompilerConf = (String, Integer) -- the module name, rt factor
 type CompilerState = State (EnvVars, KnownRebecs, StateVars, LocalVars)
 
 initialState = ([], [], [], [])
@@ -50,8 +50,8 @@ refinementAlgebra = RebecaAlgebra {
         setEnvVars envs'
         rcs' <- sequence rcs
         mai' <- mai
-        moduleName <- ask
-        return (Program (Module moduleName) [Export ["main/1"]] [] [] (concat rcs' ++ [mai']))
+        (moduleName, rtfactor) <- ask
+        return (Program (Module moduleName) [Export ["main/1"]] [] [Define "RT_FACTOR" (num rtfactor)] (concat rcs' ++ [mai']))
 
   , envVarF = \tp -> tp
 
@@ -281,7 +281,7 @@ retstm = tupleE [varE "StateVars", varE "LocalVars"]
 runRefine :: R.Model -> ReaderT CompilerConf CompilerState Program
 runRefine model = fold refinementAlgebra model
 
-translateRefinement :: String -> R.Model -> Program
-translateRefinement modelName model = evalState (runReaderT (runRefine model) modelName) initialState
+translateRefinement :: String -> Integer -> R.Model -> Program
+translateRefinement modelName rtfactor model = evalState (runReaderT (runRefine model) (modelName, rtfactor)) initialState
 
 

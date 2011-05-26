@@ -46,6 +46,7 @@ data Exp = InfixExp InfixOp Exp Exp
     | ExpVal BasicValue -- value
     | ExpVar Name -- variable
     | RecordCreate Name [(Name, Exp)]
+    | Coercion Exp -- parens
   deriving (Eq,Ord,Show,Data,Typeable)
 
 data Match = Match Pattern (Maybe Guard) Exp

@@ -60,6 +60,7 @@ data ErlangAlgebra
   , expValF :: bv -> exp
   , expVarF :: String -> exp
   , recordCreateF :: String -> [(String, exp)] -> exp
+  , coercionF :: exp -> exp
 
   , matchF :: pat -> Maybe gua -> exp -> mat
 

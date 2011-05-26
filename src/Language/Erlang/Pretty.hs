@@ -89,6 +89,7 @@ expr (ExpVal v) = val v
 expr (ExpVar "self") = text "self" <> parens empty
 expr (ExpVar name) = text $ firstUpper name
 expr (RecordCreate name attrs) = text "#" <> text name <> braces (commaSepV $ map (\(k,v) -> text k <> text "=" <> expr v) attrs)
+expr (Coercion exp) = parens (expr exp)
 
 func (Function name formals exp) = text (firstLower name) <> (parens $ commaSep $ map pattern formals) <+> text "->" $+$ inBlock [expr exp]
 

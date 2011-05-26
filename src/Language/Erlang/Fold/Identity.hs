@@ -53,6 +53,7 @@ identityAlgebra = ErlangAlgebra {
   , expValF = ExpVal
   , expVarF = ExpVar
   , recordCreateF = RecordCreate
+  , coercionF = Coercion
 
   , matchF = Match
 

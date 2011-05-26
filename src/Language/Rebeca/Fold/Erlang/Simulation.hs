@@ -18,7 +18,7 @@ simulationAlgebra = refinementAlgebra {
         setEnvVars envs'
         rcs' <- sequence rcs
         mai' <- mai
-        moduleName <- ask
+        (moduleName, rtfactor) <- ask
         let sim = Function "simulate" [varP "Args"] (Apply (moduleE "mce" "start") [RecordCreate "mce_opts"
                     [ ("program", tupleE [atomE moduleName, atomE "main", listE [varE "Args"]])
                     {-, ("monitor", tupleE [atomE "monitor", listE []])-}
@@ -31,7 +31,7 @@ simulationAlgebra = refinementAlgebra {
             , Import "$MCERLANG_HOME/languages/erlang/src/include/process.hrl"
             , Import "$MCERLANG_HOME/languages/erlang/src/include/node.hrl"
             , Import "$MCERLANG_HOME/src/include/mce_opts.hrl" ]
-            []
+            [Define "RT_FACTOR" (num rtfactor)]
             (concat rcs' ++ [mai', sim]))
     
   , reactiveClassF = \id _ kr sv msi ms -> do
@@ -69,6 +69,6 @@ simulationAlgebra = refinementAlgebra {
 runSimulate :: R.Model -> ReaderT CompilerConf CompilerState Program
 runSimulate model = fold simulationAlgebra model
 
-translateSimulation :: String -> R.Model -> Program
-translateSimulation modelName model = evalState (runReaderT (runSimulate model) modelName) initialState
+translateSimulation :: String -> Integer -> R.Model -> Program
+translateSimulation modelName rtfactor model = evalState (runReaderT (runSimulate model) (modelName, rtfactor)) initialState
 
