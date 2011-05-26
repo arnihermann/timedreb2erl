@@ -20,12 +20,13 @@ simulationAlgebra = refinementAlgebra {
         mai' <- mai
         moduleName <- getModuleName
         rtfactor <- getRtFactor
-        let sim = Function "simulate" [varP "Args"] (Apply (moduleE "mce" "start") [RecordCreate "mce_opts"
-                    [ ("program", tupleE [atomE moduleName, atomE "main", listE [varE "Args"]])
-                    {-, ("monitor", tupleE [atomE "monitor", listE []])-}
-                    , ("time_limit", numberE 1200)
-                    , ("algorithm", tupleE [atomE "mce_alg_simulation", atomE "void"])
-                    ]])
+        monitor <- getMonitor
+        let opts = [ ("monitor", tupleE [atomE "monitor", listE []])
+                   , ("program", tupleE [atomE moduleName, atomE "main", listE [varE "Args"]])
+                   , ("time_limit", numberE 1200)
+                   , ("algorithm", tupleE [atomE "mce_alg_simulation", atomE "void"])
+                   ]
+        let sim = Function "simulate" [varP "Args"] (Apply (moduleE "mce" "start") [RecordCreate "mce_opts" (if monitor then opts else (drop 1 opts))])
         return (Program (Module moduleName)
             [Export ["main/1", "simulate/1"]]
             [ Import "$MCERLANG_HOME/languages/erlang/src/include/state.hrl"
@@ -75,6 +76,6 @@ simulationAlgebra = refinementAlgebra {
 runSimulate :: R.Model -> ReaderT CompilerConf (State CompilerState) Program
 runSimulate model = fold simulationAlgebra model
 
-translateSimulation :: String -> Integer -> R.Model -> Program
-translateSimulation modelName rtfactor model = evalState (runReaderT (runSimulate model) (initialConf {moduleName = modelName, rtfactor = rtfactor })) initialState
+translateSimulation :: String -> Integer -> Bool -> R.Model -> Program
+translateSimulation modelName rtfactor monitor model = evalState (runReaderT (runSimulate model) (initialConf {moduleName = modelName, rtfactor = rtfactor, monitor = monitor })) initialState
 

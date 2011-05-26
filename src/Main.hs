@@ -5,7 +5,7 @@ module Main where
 import Paths_timedreb2erl (getDataFileName)
 
 import System.Console.CmdArgs
-import System.Directory (createDirectoryIfMissing)
+import System.Directory (createDirectoryIfMissing, doesFileExist)
 import System.FilePath ((</>), (<.>), dropExtension, takeFileName)
 
 import Control.Applicative
@@ -56,7 +56,7 @@ main = do
     let moduleName = (dropExtension . takeFileName) modelFile
         simplepro = Sim.simplifyAssignment mod
         translationFunction = if simulate then S.translateSimulation else R.translateRefinement
-        pro = T.fixTimedExp $ translationFunction moduleName rtfactor simplepro
+        pro = T.fixTimedExp $ translationFunction moduleName rtfactor monitor simplepro
 
     case outputDir of
         Nothing -> putStrLn $ P.renderProgram pro
@@ -72,21 +72,20 @@ main = do
             writeFile erlFileName translatedModel
 
             putStrLn $ "Writing rebeca library code to " ++ erlRebecaLib
-            -- withTemplate f = newSTMP $ unsafePerformIO (readFile (unsafePerformIO (getDataFileName $ "templates/" ++ f))) :: StringTemplate String
-            -- withT f = withTemplate $ "simulation/" ++ f
-            -- moduleTpl = withT "module.erl"
-            -- render $ setAttribute "moduleName" moduleName monitorTpl
             do
                 filepath <- getDataFileName "rebeca.erl"
                 rebtemplate <- readFile filepath
                 let tpl = newSTMP rebtemplate
                     reblib = render $ setAttribute "rtfactor" rtfactor tpl
                 writeFile erlRebecaLib reblib
-            {-getDataFileName "rebeca.erl" >>= readFile >>= newSTMP >>= render () >>= writeFile erlRebecaLib-}
 
             if monitor
                 then do
-                    putStrLn $ "Writing monitor template code to " ++ erlMonitor
-                    getDataFileName "monitor.erl" >>= readFile >>= writeFile erlMonitor
+                    exists <- doesFileExist erlMonitor
+                    if not exists
+                        then do
+                            putStrLn $ "Writing monitor template code to " ++ erlMonitor
+                            getDataFileName "monitor.erl" >>= readFile >>= writeFile erlMonitor
+                        else putStrLn $ erlMonitor ++ " already exists, not overwriting"
                 else return ()
 

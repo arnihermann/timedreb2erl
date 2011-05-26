@@ -12,15 +12,20 @@ import qualified Language.Rebeca.Absrebeca as R
 import Language.Rebeca.Algebra
 import Language.Rebeca.Fold
 
+
+type Compiler = ReaderT CompilerConf (State CompilerState)
+
 data CompilerConf = CompilerConf {
     moduleName :: String
   , rtfactor :: Integer
+  , monitor :: Bool
 }
 
 
 initialConf = CompilerConf {
     moduleName = ""
   , rtfactor = 0
+  , monitor = False
 }
 
 data CompilerState = CompilerState {
@@ -43,8 +48,15 @@ setStateVars names = lift get >>= \rec -> put (rec { sv = names })
 setLocalVars names = lift get >>= \rec -> put (rec { lv = [] })
 addLocalVar name = lift get >>= \rec -> put (rec { lv = name : (lv rec) })
 
+getModuleName :: Compiler String
 getModuleName = ask >>= return . moduleName
+
+getRtFactor :: Compiler Integer
 getRtFactor = ask >>= return . rtfactor
+
+getMonitor :: Compiler Bool
+getMonitor = ask >>= return . monitor
+
 getEnvVars = lift get >>= return . env
 getKnownRebecs = lift get >>= return . kr
 getStateVars = lift get >>= return . sv
@@ -294,10 +306,10 @@ stm = FunAnon [tupleP [varP "StateVars", varP "LocalVars"]]
 apply = foldr Call params
 retstm = tupleE [varE "StateVars", varE "LocalVars"]
 
-runRefine :: R.Model -> ReaderT CompilerConf (State CompilerState) Program
+runRefine :: R.Model -> Compiler Program
 runRefine model = fold refinementAlgebra model
 
-translateRefinement :: String -> Integer -> R.Model -> Program
-translateRefinement modelName rtfactor model = evalState (runReaderT (runRefine model) (initialConf {moduleName = modelName, rtfactor = rtfactor })) initialState
+translateRefinement :: String -> Integer -> Bool -> R.Model -> Program
+translateRefinement modelName rtfactor monitor model = evalState (runReaderT (runRefine model) (initialConf {moduleName = modelName, rtfactor = rtfactor, monitor = monitor })) initialState
 
 
